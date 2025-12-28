@@ -1,0 +1,39 @@
+{
+  "name": "aster",
+  "version": "0.1.0",
+  "description": "跨框架开发脚手架 - 项目创建与组件管理",
+  "bin": {
+    "aster": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --watch"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "prompts": "^2.4.2",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.0",
+    "execa": "^8.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "@types/node": "^20.0.0",
+    "@types/prompts": "^2.4.9",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "react",
+    "vue",
+    "angular",
+    "scaffold",
+    "cli",
+    "components"
+  ],
+  "license": "MIT"
+}

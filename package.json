@@ -1,0 +1,14 @@
+{
+  "name": "aster",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter docs dev",
+    "build": "pnpm --filter docs build",
+    "build:cli": "pnpm --filter aster build",
+    "release": "pnpm build:cli && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.0",
+    "typescript": "^5.3.0"
+  }
+}

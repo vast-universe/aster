@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Aster UI Configuration",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "style": {
+      "type": "string",
+      "enum": ["nativewind", "stylesheet"],
+      "default": "nativewind",
+      "description": "样式方案"
+    },
+    "typescript": {
+      "type": "boolean",
+      "default": true,
+      "description": "是否使用 TypeScript"
+    },
+    "paths": {
+      "type": "object",
+      "properties": {
+        "components": {
+          "type": "string",
+          "default": "components/ui",
+          "description": "组件存放目录"
+        },
+        "lib": {
+          "type": "string",
+          "default": "lib",
+          "description": "工具函数目录"
+        }
+      },
+      "required": ["components", "lib"]
+    },
+    "aliases": {
+      "type": "object",
+      "properties": {
+        "@/components": {
+          "type": "string"
+        },
+        "@/lib": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "required": ["style", "typescript", "paths"]
+}
