@@ -22,6 +22,12 @@ export const vueAdapter: FrameworkAdapter = {
   displayName: "Vue (Vite)",
   description: "使用 Vite 创建 Vue 项目",
 
+  defaultPaths: {
+    ui: "src/components/ui",
+    hooks: "src/composables",
+    lib: "src/lib",
+  },
+
   styles: [
     { title: "Tailwind CSS", value: "tailwind" },
     { title: "UnoCSS", value: "unocss" },
@@ -184,6 +190,7 @@ export function cn(...inputs: ClassValue[]) {
       paths: {
         components: "src/components/ui",
         lib: "src/lib",
+        hooks: "src/composables",
       },
     };
 

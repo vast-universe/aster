@@ -1,9 +1,15 @@
-import { readFile } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
+/**
+ * Diff 命令 - 检查组件更新
+ */
+
 import chalk from "chalk";
 import { getConfig, hasConfig } from "../utils/config";
 import { fetchComponent, fetchRegistry } from "../utils/registry";
+import {
+  readFile,
+  getInstalledComponents,
+  findComponentFile,
+} from "../core/fs";
 
 export async function diff(componentName?: string): Promise<void> {
   try {
@@ -32,25 +38,25 @@ export async function diff(componentName?: string): Promise<void> {
   }
 }
 
-async function diffAllComponents(config: Awaited<ReturnType<typeof getConfig>>) {
+async function diffAllComponents(
+  config: Awaited<ReturnType<typeof getConfig>>
+) {
   const registry = await fetchRegistry(config.style);
+  const installed = getInstalledComponents(config.paths.components);
   const componentsWithUpdates: string[] = [];
 
   console.log(chalk.dim("检查组件更新...\n"));
 
   for (const item of registry) {
     if (item.type !== "registry:ui") continue;
+    if (!installed.includes(item.name)) continue;
 
-    const localPath = path.join(
-      config.paths.components,
-      `${item.name}.tsx`
-    );
-
-    if (!existsSync(localPath)) continue;
+    const localPath = findComponentFile(config.paths.components, item.name);
+    if (!localPath) continue;
 
     try {
       const remoteItem = await fetchComponent(item.name, config.style);
-      const localContent = await readFile(localPath, "utf-8");
+      const localContent = await readFile(localPath);
       const remoteContent = remoteItem.files[0]?.content || "";
 
       if (normalizeContent(localContent) !== normalizeContent(remoteContent)) {
@@ -81,15 +87,15 @@ async function diffSingleComponent(
   name: string,
   config: Awaited<ReturnType<typeof getConfig>>
 ) {
-  const localPath = path.join(config.paths.components, `${name}.tsx`);
+  const localPath = findComponentFile(config.paths.components, name);
 
-  if (!existsSync(localPath)) {
+  if (!localPath) {
     console.log(chalk.yellow(`组件 ${name} 不存在于本地\n`));
     return;
   }
 
   const remoteItem = await fetchComponent(name, config.style);
-  const localContent = await readFile(localPath, "utf-8");
+  const localContent = await readFile(localPath);
   const remoteContent = remoteItem.files[0]?.content || "";
 
   if (normalizeContent(localContent) === normalizeContent(remoteContent)) {

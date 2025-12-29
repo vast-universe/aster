@@ -11,6 +11,7 @@ import { update } from "./commands/update";
 import { search } from "./commands/search";
 import { registryAdd, registryRemove, registryList } from "./commands/registry";
 import { cacheStatus, cacheClean, cacheClear } from "./commands/cache";
+import { presetList, presetInfo, presetRemove } from "./commands/preset";
 
 const program = new Command();
 
@@ -39,6 +40,7 @@ program
   .description("添加组件到项目")
   .argument("<components...>", "组件名称 (支持 github:user/repo/name, @namespace/name, URL)")
   .option("-f, --force", "覆盖已存在的文件")
+  .option("--skip-export", "跳过自动更新 index.ts 导出")
   .action(add);
 
 program
@@ -120,5 +122,27 @@ cache
   .command("clear")
   .description("清空所有缓存")
   .action(cacheClear);
+
+// Preset 子命令
+const preset = program
+  .command("preset")
+  .description("管理项目预设");
+
+preset
+  .command("list")
+  .description("列出所有预设")
+  .action(presetList);
+
+preset
+  .command("info")
+  .description("显示预设详情")
+  .argument("[name]", "预设名称")
+  .action(presetInfo);
+
+preset
+  .command("remove")
+  .description("删除自定义预设")
+  .argument("[name]", "预设名称")
+  .action(presetRemove);
 
 program.parse();

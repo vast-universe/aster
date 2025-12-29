@@ -9,6 +9,11 @@ import {
   type FrameworkConfig,
   type FrameworkName,
 } from "../utils/frameworks";
+import {
+  getPreset,
+  getAllPresets,
+  saveUserPreset,
+} from "../utils/presets";
 
 interface CreateOptions {
   yes?: boolean;
@@ -24,14 +29,80 @@ export async function create(
   console.log(chalk.cyan.bold("\n🚀 Aster - 创建项目\n"));
 
   try {
-    // 1. 选择框架
-    const frameworkName = await selectFramework(options);
+    let frameworkName: FrameworkName;
+    let config: FrameworkConfig;
+
+    // 使用预设
+    if (options.preset) {
+      const preset = await getPreset(options.preset);
+      if (!preset) {
+        console.error(chalk.red(`预设 "${options.preset}" 不存在`));
+        console.log(chalk.dim("\n可用预设:"));
+        const presets = await getAllPresets();
+        presets.forEach((p) => console.log(chalk.dim(`  - ${p.name}: ${p.description}`)));
+        process.exit(1);
+      }
+
+      frameworkName = preset.framework;
+      config = {
+        projectName: projectName || "my-app",
+        style: preset.style,
+        stateLib: preset.stateLib,
+        extraLibs: preset.extraLibs,
+      };
+
+      console.log(chalk.dim(`使用预设: ${preset.name}`));
+    } else {
+      // 1. 选择框架或预设
+      const { usePreset } = options.yes
+        ? { usePreset: false }
+        : await prompts({
+            type: "confirm",
+            name: "usePreset",
+            message: "是否使用预设配置？",
+            initial: false,
+          });
+
+      if (usePreset) {
+        // 选择预设
+        const presets = await getAllPresets();
+        const { selectedPreset } = await prompts({
+          type: "select",
+          name: "selectedPreset",
+          message: "选择预设:",
+          choices: presets.map((p) => ({
+            title: `${p.name} - ${p.description}`,
+            value: p.name,
+            description: `${p.framework} | ${p.style}`,
+          })),
+        });
+
+        const preset = await getPreset(selectedPreset);
+        if (preset) {
+          frameworkName = preset.framework;
+          config = {
+            projectName: projectName || "my-app",
+            style: preset.style,
+            stateLib: preset.stateLib,
+            extraLibs: preset.extraLibs,
+          };
+          console.log(chalk.dim(`\n使用预设: ${preset.name}\n`));
+        } else {
+          throw new Error("预设加载失败");
+        }
+      } else {
+        // 手动配置
+        frameworkName = await selectFramework(options);
+        const adapter = getFrameworkAdapter(frameworkName);
+
+        console.log(chalk.dim(`\n框架: ${adapter.displayName}\n`));
+
+        // 获取项目配置
+        config = await getProjectConfig(projectName, adapter, options);
+      }
+    }
+
     const adapter = getFrameworkAdapter(frameworkName);
-
-    console.log(chalk.dim(`\n框架: ${adapter.displayName}\n`));
-
-    // 2. 获取项目配置
-    const config = await getProjectConfig(projectName, adapter, options);
     const targetDir = path.resolve(process.cwd(), config.projectName);
 
     // 检查目录是否存在
@@ -71,7 +142,46 @@ export async function create(
     await adapter.generateAsterConfig(targetDir, config);
     spinner.succeed("Aster 配置完成");
 
-    // 7. 输出结果
+    // 7. 询问是否保存为预设
+    if (!options.preset && !options.yes) {
+      const { savePreset } = await prompts({
+        type: "confirm",
+        name: "savePreset",
+        message: "是否保存当前配置为预设？",
+        initial: false,
+      });
+
+      if (savePreset) {
+        const { presetName, presetDesc } = await prompts([
+          {
+            type: "text",
+            name: "presetName",
+            message: "预设名称:",
+            initial: `${frameworkName}-custom`,
+          },
+          {
+            type: "text",
+            name: "presetDesc",
+            message: "预设描述:",
+            initial: "自定义预设",
+          },
+        ]);
+
+        if (presetName) {
+          await saveUserPreset({
+            name: presetName,
+            description: presetDesc || "自定义预设",
+            framework: frameworkName,
+            style: config.style,
+            stateLib: config.stateLib,
+            extraLibs: config.extraLibs,
+          });
+          console.log(chalk.green(`\n预设 "${presetName}" 已保存`));
+        }
+      }
+    }
+
+    // 8. 输出结果
     console.log(chalk.green.bold("\n✅ 项目创建成功!\n"));
     console.log(chalk.white(`  cd ${config.projectName}`));
     console.log(chalk.white("  npm run dev\n"));

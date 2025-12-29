@@ -10,14 +10,38 @@ export interface RegistryConfig {
 }
 
 export interface AsterConfig {
+  framework?: string;
   style: Style;
   typescript: boolean;
   paths: {
     components: string;
     lib: string;
+    hooks?: string;
   };
   // 第三方 registry 配置
   registries?: Record<string, string | RegistryConfig>;
+}
+
+/** 默认路径配置 */
+const DEFAULT_PATHS = {
+  components: "components/ui",
+  lib: "lib",
+  hooks: "hooks",
+};
+
+/**
+ * 根据文件类型获取目标目录
+ */
+export function getTargetDir(fileType: string, config: AsterConfig): string {
+  switch (fileType) {
+    case "registry:ui":
+      return config.paths.components || DEFAULT_PATHS.components;
+    case "registry:hook":
+      return config.paths.hooks || DEFAULT_PATHS.hooks;
+    case "registry:lib":
+    default:
+      return config.paths.lib || DEFAULT_PATHS.lib;
+  }
 }
 
 export async function getConfig(): Promise<AsterConfig> {

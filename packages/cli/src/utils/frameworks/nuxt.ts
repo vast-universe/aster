@@ -22,6 +22,12 @@ export const nuxtAdapter: FrameworkAdapter = {
   displayName: "Nuxt",
   description: "使用 Nuxt 创建 Vue 全栈项目",
 
+  defaultPaths: {
+    ui: "components/ui",
+    hooks: "composables",
+    lib: "utils",
+  },
+
   styles: [
     { title: "Tailwind CSS", value: "tailwind" },
     { title: "UnoCSS", value: "unocss" },
@@ -164,6 +170,7 @@ export function cn(...inputs: ClassValue[]) {
       paths: {
         components: "components/ui",
         lib: "utils",
+        hooks: "composables",
       },
     };
 

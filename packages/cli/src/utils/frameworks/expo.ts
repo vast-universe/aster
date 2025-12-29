@@ -29,6 +29,12 @@ export const expoAdapter: FrameworkAdapter = {
   displayName: "Expo (React Native)",
   description: "使用 Expo 创建 React Native 项目",
 
+  defaultPaths: {
+    ui: "components/ui",
+    hooks: "hooks",
+    lib: "lib",
+  },
+
   styles: [
     { title: "NativeWind (Tailwind)", value: "nativewind" },
     { title: "StyleSheet (零依赖)", value: "stylesheet" },
@@ -149,6 +155,7 @@ export const expoAdapter: FrameworkAdapter = {
       paths: {
         components: "components/ui",
         lib: "lib",
+        hooks: "hooks",
       },
     };
 

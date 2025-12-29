@@ -24,6 +24,12 @@ export const nextAdapter: FrameworkAdapter = {
   displayName: "Next.js",
   description: "使用 Next.js 创建 React Web 项目",
 
+  defaultPaths: {
+    ui: "src/components/ui",
+    hooks: "src/hooks",
+    lib: "src/lib",
+  },
+
   styles: [
     { title: "Tailwind CSS", value: "tailwind" },
     { title: "CSS Modules", value: "css-modules" },
@@ -158,6 +164,7 @@ export function cn(...inputs: ClassValue[]) {
       paths: {
         components: "src/components/ui",
         lib: "src/lib",
+        hooks: "src/hooks",
       },
     };
 

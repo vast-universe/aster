@@ -2,15 +2,19 @@
  * Update 命令 - 更新已安装的组件
  */
 
-import { writeFile, readdir, readFile } from "fs/promises";
-import { existsSync } from "fs";
 import path from "path";
 import chalk from "chalk";
 import ora from "ora";
 import prompts from "prompts";
-import { getConfig } from "../utils/config";
-import { fetchComponentFromSource } from "../utils/fetcher";
 import { createHash } from "crypto";
+import { getConfig, getTargetDir } from "../utils/config";
+import { fetchComponentFromSource } from "../utils/fetcher";
+import {
+  writeFile,
+  readFile,
+  getInstalledComponents,
+  findComponentFile,
+} from "../core/fs";
 
 interface UpdateInfo {
   name: string;
@@ -31,7 +35,7 @@ export async function update(
     const componentsDir = config.paths.components;
 
     // 获取已安装的组件
-    const installed = await getInstalledComponents(componentsDir);
+    const installed = getInstalledComponents(componentsDir);
 
     if (installed.length === 0) {
       console.log(chalk.yellow("\n没有已安装的组件\n"));
@@ -65,8 +69,10 @@ export async function update(
 
     for (const name of toCheck) {
       try {
-        const localPath = path.join(componentsDir, `${name}.tsx`);
-        const localContent = await readFile(localPath, "utf-8");
+        const localPath = findComponentFile(componentsDir, name);
+        if (!localPath) continue;
+
+        const localContent = await readFile(localPath);
         const localHash = hashContent(localContent);
 
         const remoteItem = await fetchComponentFromSource(name, style, config);
@@ -105,10 +111,13 @@ export async function update(
     }
 
     if (upToDate.length > 0) {
-      console.log(chalk.dim(`\n已是最新: ${upToDate.map((u) => u.name).join(", ")}`));
+      console.log(
+        chalk.dim(`\n已是最新: ${upToDate.map((u) => u.name).join(", ")}`)
+      );
     }
 
     // 确认更新
+    let toUpdate: string[];
     if (!options.force) {
       const answer = await prompts({
         type: "multiselect",
@@ -126,31 +135,28 @@ export async function update(
         return;
       }
 
-      components = answer.selected;
+      toUpdate = answer.selected;
     } else {
-      components = withUpdates.map((u) => u.name);
+      toUpdate = withUpdates.map((u) => u.name);
     }
 
     console.log();
 
     // 执行更新
-    for (const name of components) {
+    for (const name of toUpdate) {
       spinner.start(`更新 ${name}...`);
 
       try {
         const remoteItem = await fetchComponentFromSource(name, style, config);
 
         for (const file of remoteItem.files) {
-          const targetDir =
-            file.type === "registry:ui"
-              ? config.paths.components
-              : config.paths.lib;
+          const targetDir = getTargetDir(file.type, config);
           const targetPath = path.join(targetDir, path.basename(file.path));
           await writeFile(targetPath, file.content);
         }
 
         spinner.succeed(`已更新 ${name}`);
-      } catch (error) {
+      } catch {
         spinner.fail(`更新 ${name} 失败`);
       }
     }
@@ -163,20 +169,6 @@ export async function update(
     }
     process.exit(1);
   }
-}
-
-/**
- * 获取已安装的组件列表
- */
-async function getInstalledComponents(componentsDir: string): Promise<string[]> {
-  if (!existsSync(componentsDir)) {
-    return [];
-  }
-
-  const files = await readdir(componentsDir);
-  return files
-    .filter((f) => f.endsWith(".tsx"))
-    .map((f) => f.replace(".tsx", ""));
 }
 
 /**
