@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command } from "commander";
+import { create } from "./commands/create";
 import { init } from "./commands/init";
 import { add } from "./commands/add";
 import { list } from "./commands/list";
@@ -17,6 +18,16 @@ program
   .name("aster")
   .description("跨框架开发脚手架 - 项目创建与组件管理")
   .version("0.1.0");
+
+program
+  .command("create")
+  .description("创建新项目")
+  .argument("[project-name]", "项目名称")
+  .option("-y, --yes", "使用默认配置")
+  .option("-f, --framework <name>", "指定框架 (expo/next/vue)")
+  .option("-p, --preset <name>", "使用预设配置")
+  .option("-t, --template <name>", "使用指定模板")
+  .action(create);
 
 program
   .command("init")
