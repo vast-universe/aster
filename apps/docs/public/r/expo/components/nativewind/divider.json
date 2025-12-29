@@ -1,0 +1,16 @@
+{
+  "name": "divider",
+  "type": "registry:ui",
+  "description": "分割线组件",
+  "files": [
+    {
+      "path": "ui/divider.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Text } from \"react-native\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface DividerProps {\n  orientation?: \"horizontal\" | \"vertical\";\n  children?: React.ReactNode;\n  className?: string;\n}\n\nexport function Divider({\n  orientation = \"horizontal\",\n  children,\n  className,\n}: DividerProps) {\n  if (orientation === \"vertical\") {\n    return (\n      <View\n        className={cn(\"w-px bg-gray-200 dark:bg-gray-700 self-stretch\", className)}\n      />\n    );\n  }\n\n  if (children) {\n    return (\n      <View className={cn(\"flex-row items-center gap-3\", className)}>\n        <View className=\"flex-1 h-px bg-gray-200 dark:bg-gray-700\" />\n        <Text className=\"text-sm text-gray-500 dark:text-gray-400\">\n          {children}\n        </Text>\n        <View className=\"flex-1 h-px bg-gray-200 dark:bg-gray-700\" />\n      </View>\n    );\n  }\n\n  return (\n    <View\n      className={cn(\"h-px bg-gray-200 dark:bg-gray-700\", className)}\n    />\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

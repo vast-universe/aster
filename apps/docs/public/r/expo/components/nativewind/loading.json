@@ -1,0 +1,16 @@
+{
+  "name": "loading",
+  "type": "registry:ui",
+  "description": "加载指示器组件",
+  "files": [
+    {
+      "path": "ui/loading.tsx",
+      "type": "registry:ui",
+      "content": "import { View, ActivityIndicator, Text } from \"react-native\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface LoadingProps {\n  size?: \"small\" | \"large\";\n  color?: string;\n  text?: string;\n  fullscreen?: boolean;\n  className?: string;\n}\n\nexport function Loading({\n  size = \"large\",\n  color = \"#3b82f6\",\n  text,\n  fullscreen = false,\n  className,\n}: LoadingProps) {\n  const content = (\n    <View className={cn(\"items-center justify-center gap-2\", className)}>\n      <ActivityIndicator size={size} color={color} />\n      {text && (\n        <Text className=\"text-gray-500 dark:text-gray-400 text-sm\">{text}</Text>\n      )}\n    </View>\n  );\n\n  if (fullscreen) {\n    return (\n      <View className=\"absolute inset-0 items-center justify-center bg-white/80 dark:bg-gray-900/80 z-50\">\n        {content}\n      </View>\n    );\n  }\n\n  return content;\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "action-sheet",
+  "type": "registry:ui",
+  "description": "操作菜单组件",
+  "files": [
+    {
+      "path": "ui/action-sheet.tsx",
+      "type": "registry:ui",
+      "content": "import { Modal, View, Text, Pressable } from \"react-native\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface ActionSheetOption {\n  label: string;\n  onPress: () => void;\n  destructive?: boolean;\n}\n\nexport interface ActionSheetProps {\n  visible: boolean;\n  onClose: () => void;\n  title?: string;\n  message?: string;\n  options: ActionSheetOption[];\n  cancelText?: string;\n  className?: string;\n}\n\nexport function ActionSheet({\n  visible,\n  onClose,\n  title,\n  message,\n  options,\n  cancelText = \"取消\",\n  className,\n}: ActionSheetProps) {\n  return (\n    <Modal\n      visible={visible}\n      transparent\n      animationType=\"slide\"\n      onRequestClose={onClose}\n    >\n      <Pressable\n        className=\"flex-1 bg-black/50 justify-end\"\n        onPress={onClose}\n      >\n        <View className={cn(\"bg-gray-100 dark:bg-gray-800 p-2\", className)}>\n          <View className=\"bg-white dark:bg-gray-900 rounded-xl overflow-hidden mb-2\">\n            {(title || message) && (\n              <View className=\"p-4 border-b border-gray-200 dark:border-gray-700\">\n                {title && (\n                  <Text className=\"text-sm font-semibold text-center text-gray-900 dark:text-white\">\n                    {title}\n                  </Text>\n                )}\n                {message && (\n                  <Text className=\"text-xs text-center text-gray-500 dark:text-gray-400 mt-1\">\n                    {message}\n                  </Text>\n                )}\n              </View>\n            )}\n            {options.map((option, index) => (\n              <Pressable\n                key={index}\n                onPress={() => {\n                  option.onPress();\n                  onClose();\n                }}\n                className={cn(\n                  \"py-4 items-center\",\n                  index < options.length - 1 &&\n                    \"border-b border-gray-200 dark:border-gray-700\"\n                )}\n              >\n                <Text\n                  className={cn(\n                    \"text-lg\",\n                    option.destructive\n                      ? \"text-red-500\"\n                      : \"text-blue-500\"\n                  )}\n                >\n                  {option.label}\n                </Text>\n              </Pressable>\n            ))}\n          </View>\n          <Pressable\n            onPress={onClose}\n            className=\"bg-white dark:bg-gray-900 rounded-xl py-4 items-center\"\n          >\n            <Text className=\"text-lg font-semibold text-blue-500\">\n              {cancelText}\n            </Text>\n          </Pressable>\n        </View>\n      </Pressable>\n    </Modal>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

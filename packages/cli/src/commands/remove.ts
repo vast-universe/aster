@@ -1,45 +1,52 @@
-/**
- * Remove 命令 - 删除已安装的组件
- */
-
 import chalk from "chalk";
 import ora from "ora";
 import prompts from "prompts";
 import { getConfig } from "../utils/config";
+import { deleteFile, getInstalledComponentsFromDir, findComponentFile } from "../core/fs";
 import {
-  deleteFile,
   getInstalledComponents,
-  findComponentFile,
-} from "../core/fs";
+  getInstalledConfigs,
+  removeComponentRecord,
+  removeConfigRecord,
+  hasLockfile,
+} from "../core/lockfile";
 
-export async function remove(
-  components: string[],
-  options: { yes?: boolean }
-): Promise<void> {
+export async function remove(components: string[], options: { yes?: boolean }): Promise<void> {
   const spinner = ora();
 
   try {
     const config = await getConfig();
     const componentsDir = config.paths.components;
 
-    // 获取已安装的组件
-    const installed = getInstalledComponents(componentsDir);
+    let installed: string[];
+    let installedConfigs: string[] = [];
+    const useLockfile = hasLockfile();
 
-    if (installed.length === 0) {
-      console.log(chalk.yellow("\n没有已安装的组件\n"));
+    if (useLockfile) {
+      installed = await getInstalledComponents();
+      installedConfigs = await getInstalledConfigs();
+    } else {
+      installed = getInstalledComponentsFromDir(componentsDir);
+    }
+
+    const allInstalled = [...installed, ...installedConfigs.map((c) => `config:${c}`)];
+
+    if (allInstalled.length === 0) {
+      console.log(chalk.yellow("\n没有已安装的组件或配置\n"));
       return;
     }
 
-    // 如果没有指定组件，让用户选择
     if (components.length === 0) {
+      const choices = [
+        ...installed.map((name) => ({ title: name, value: name })),
+        ...installedConfigs.map((name) => ({ title: `config:${name}`, value: `config:${name}` })),
+      ];
+
       const answer = await prompts({
         type: "multiselect",
         name: "components",
-        message: "选择要删除的组件:",
-        choices: installed.map((name) => ({
-          title: name,
-          value: name,
-        })),
+        message: "选择要删除的组件/配置:",
+        choices,
         min: 1,
       });
 
@@ -51,27 +58,31 @@ export async function remove(
       components = answer.components;
     }
 
-    // 过滤不存在的组件
-    const validComponents = components.filter((c) => installed.includes(c));
-    const invalidComponents = components.filter((c) => !installed.includes(c));
+    const configsToRemove = components.filter((c) => c.startsWith("config:")).map((c) => c.replace("config:", ""));
+    const componentsToRemove = components.filter((c) => !c.startsWith("config:"));
 
-    if (invalidComponents.length > 0) {
-      console.log(
-        chalk.yellow(`\n⚠ 以下组件不存在: ${invalidComponents.join(", ")}`)
-      );
+    const validComponents = componentsToRemove.filter((c) => installed.includes(c));
+    const validConfigs = configsToRemove.filter((c) => installedConfigs.includes(c));
+    const invalidItems = [
+      ...componentsToRemove.filter((c) => !installed.includes(c)),
+      ...configsToRemove.filter((c) => !installedConfigs.includes(c)).map((c) => `config:${c}`),
+    ];
+
+    if (invalidItems.length > 0) {
+      console.log(chalk.yellow(`\n⚠ 以下项不存在: ${invalidItems.join(", ")}`));
     }
 
-    if (validComponents.length === 0) {
-      console.log(chalk.yellow("\n没有可删除的组件\n"));
+    if (validComponents.length === 0 && validConfigs.length === 0) {
+      console.log(chalk.yellow("\n没有可删除的项\n"));
       return;
     }
 
-    // 确认删除
+    const allValid = [...validComponents, ...validConfigs.map((c) => `config:${c}`)];
     if (!options.yes) {
       const confirm = await prompts({
         type: "confirm",
         name: "value",
-        message: `确定删除 ${validComponents.join(", ")}?`,
+        message: `确定删除 ${allValid.join(", ")}?`,
         initial: false,
       });
 
@@ -83,23 +94,34 @@ export async function remove(
 
     console.log();
 
-    // 删除组件文件
     for (const component of validComponents) {
-      const filePath = findComponentFile(componentsDir, component);
+      spinner.start(`删除 ${component}...`);
 
-      if (!filePath) {
-        console.log(chalk.yellow(`⚠ ${component} 文件不存在`));
-        continue;
+      if (useLockfile) {
+        const files = await removeComponentRecord(component);
+        for (const file of files) {
+          await deleteFile(file);
+        }
+      } else {
+        const filePath = findComponentFile(componentsDir, component);
+        if (filePath) {
+          await deleteFile(filePath);
+        }
       }
 
-      spinner.start(`删除 ${component}...`);
-      await deleteFile(filePath);
       spinner.succeed(`已删除 ${component}`);
     }
 
-    console.log(chalk.green("\n完成! 🎉\n"));
+    for (const configName of validConfigs) {
+      spinner.start(`删除 config:${configName}...`);
+      const files = await removeConfigRecord(configName);
+      for (const file of files) {
+        await deleteFile(file);
+      }
+      spinner.succeed(`已删除 config:${configName}`);
+    }
 
-    // 提示清理依赖
+    console.log(chalk.green("\n完成! 🎉\n"));
     console.log(chalk.dim("提示: 组件的 npm 依赖需要手动清理，运行:"));
     console.log(chalk.dim("  npm prune 或 pnpm prune\n"));
   } catch (error) {

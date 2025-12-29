@@ -37,8 +37,11 @@ program
 
 program
   .command("add")
-  .description("添加组件到项目")
-  .argument("<components...>", "组件名称 (支持 github:user/repo/name, @namespace/name, URL)")
+  .description("添加组件或配置片段")
+  .argument(
+    "<items...>",
+    "组件/配置名称 (支持 config:name, github:user/repo/name, @namespace/name)"
+  )
   .option("-f, --force", "覆盖已存在的文件")
   .option("--skip-export", "跳过自动更新 index.ts 导出")
   .action(add);
@@ -60,7 +63,9 @@ program
 
 program
   .command("list")
-  .description("列出所有可用组件")
+  .description("列出所有可用组件或配置")
+  .option("-c, --configs", "列出配置片段")
+  .option("-i, --installed", "列出已安装的组件和配置")
   .action(list);
 
 program
@@ -104,34 +109,18 @@ registry
   .action(registryList);
 
 // Cache 子命令
-const cache = program
-  .command("cache")
-  .description("管理离线缓存");
+const cache = program.command("cache").description("管理离线缓存");
 
-cache
-  .command("status")
-  .description("显示缓存状态")
-  .action(cacheStatus);
+cache.command("status").description("显示缓存状态").action(cacheStatus);
 
-cache
-  .command("clean")
-  .description("清理过期缓存")
-  .action(cacheClean);
+cache.command("clean").description("清理过期缓存").action(cacheClean);
 
-cache
-  .command("clear")
-  .description("清空所有缓存")
-  .action(cacheClear);
+cache.command("clear").description("清空所有缓存").action(cacheClear);
 
 // Preset 子命令
-const preset = program
-  .command("preset")
-  .description("管理项目预设");
+const preset = program.command("preset").description("管理项目预设");
 
-preset
-  .command("list")
-  .description("列出所有预设")
-  .action(presetList);
+preset.command("list").description("列出所有预设").action(presetList);
 
 preset
   .command("info")

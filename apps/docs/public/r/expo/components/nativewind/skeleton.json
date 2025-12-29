@@ -1,0 +1,16 @@
+{
+  "name": "skeleton",
+  "type": "registry:ui",
+  "description": "骨架屏加载占位组件",
+  "files": [
+    {
+      "path": "ui/skeleton.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Animated } from \"react-native\";\nimport { useEffect, useRef } from \"react\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface SkeletonProps {\n  width?: number | string;\n  height?: number | string;\n  circle?: boolean;\n  className?: string;\n}\n\nexport function Skeleton({\n  width,\n  height = 20,\n  circle,\n  className,\n}: SkeletonProps) {\n  const opacity = useRef(new Animated.Value(0.3)).current;\n\n  useEffect(() => {\n    const animation = Animated.loop(\n      Animated.sequence([\n        Animated.timing(opacity, {\n          toValue: 1,\n          duration: 800,\n          useNativeDriver: true,\n        }),\n        Animated.timing(opacity, {\n          toValue: 0.3,\n          duration: 800,\n          useNativeDriver: true,\n        }),\n      ])\n    );\n    animation.start();\n    return () => animation.stop();\n  }, [opacity]);\n\n  return (\n    <Animated.View\n      style={[\n        {\n          width: width || \"100%\",\n          height,\n          opacity,\n        },\n        circle && { borderRadius: 9999 },\n      ]}\n      className={cn(\n        \"bg-gray-200 dark:bg-gray-700 rounded\",\n        className\n      )}\n    />\n  );\n}\n\nexport interface SkeletonTextProps {\n  lines?: number;\n  className?: string;\n}\n\nexport function SkeletonText({ lines = 3, className }: SkeletonTextProps) {\n  return (\n    <View className={cn(\"gap-2\", className)}>\n      {Array.from({ length: lines }).map((_, i) => (\n        <Skeleton\n          key={i}\n          height={16}\n          width={i === lines - 1 ? \"60%\" : \"100%\"}\n        />\n      ))}\n    </View>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

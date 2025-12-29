@@ -5,7 +5,7 @@
 import chalk from "chalk";
 import ora from "ora";
 import { getConfig, hasConfig } from "../utils/config";
-import { fetchRegistry } from "../utils/registry";
+import { fetchRegistry } from "../services/registry";
 
 interface SearchResult {
   name: string;
@@ -47,10 +47,10 @@ export async function search(query?: string): Promise<void> {
     let officialComponents: SearchResult[] = [];
 
     try {
-      const registry = await fetchRegistry(style);
+      const registry = await fetchRegistry("expo", style);
       officialComponents = registry.map((item) => ({
         name: item.name,
-        description: item.description,
+        description: item.description || "",
         source: "official" as const,
       }));
     } catch {

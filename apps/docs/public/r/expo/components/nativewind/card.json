@@ -1,0 +1,16 @@
+{
+  "name": "card",
+  "type": "registry:ui",
+  "description": "卡片容器组件",
+  "files": [
+    {
+      "path": "ui/card.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Text } from \"react-native\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface CardProps {\n  children: React.ReactNode;\n  className?: string;\n}\n\nexport function Card({ children, className }: CardProps) {\n  return (\n    <View\n      className={cn(\n        \"rounded-xl bg-white dark:bg-gray-800 p-4 shadow-sm\",\n        \"border border-gray-200 dark:border-gray-700\",\n        className\n      )}\n    >\n      {children}\n    </View>\n  );\n}\n\nexport interface CardHeaderProps {\n  children: React.ReactNode;\n  className?: string;\n}\n\nexport function CardHeader({ children, className }: CardHeaderProps) {\n  return <View className={cn(\"mb-3\", className)}>{children}</View>;\n}\n\nexport interface CardTitleProps {\n  children: React.ReactNode;\n  className?: string;\n}\n\nexport function CardTitle({ children, className }: CardTitleProps) {\n  return (\n    <Text\n      className={cn(\n        \"text-lg font-semibold text-gray-900 dark:text-white\",\n        className\n      )}\n    >\n      {children}\n    </Text>\n  );\n}\n\nexport interface CardDescriptionProps {\n  children: React.ReactNode;\n  className?: string;\n}\n\nexport function CardDescription({ children, className }: CardDescriptionProps) {\n  return (\n    <Text className={cn(\"text-sm text-gray-500 dark:text-gray-400\", className)}>\n      {children}\n    </Text>\n  );\n}\n\nexport interface CardContentProps {\n  children: React.ReactNode;\n  className?: string;\n}\n\nexport function CardContent({ children, className }: CardContentProps) {\n  return <View className={cn(className)}>{children}</View>;\n}\n\nexport interface CardFooterProps {\n  children: React.ReactNode;\n  className?: string;\n}\n\nexport function CardFooter({ children, className }: CardFooterProps) {\n  return (\n    <View className={cn(\"mt-4 flex-row items-center\", className)}>\n      {children}\n    </View>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

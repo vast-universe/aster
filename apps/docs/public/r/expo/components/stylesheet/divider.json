@@ -1,0 +1,14 @@
+{
+  "name": "divider",
+  "type": "registry:ui",
+  "description": "分割线组件",
+  "files": [
+    {
+      "path": "ui/divider.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Text, StyleSheet } from \"react-native\";\n\nexport interface DividerProps {\n  orientation?: \"horizontal\" | \"vertical\";\n  children?: React.ReactNode;\n}\n\nexport function Divider({ orientation = \"horizontal\", children }: DividerProps) {\n  if (orientation === \"vertical\") {\n    return <View style={styles.vertical} />;\n  }\n\n  if (children) {\n    return (\n      <View style={styles.withText}>\n        <View style={styles.line} />\n        <Text style={styles.text}>{children}</Text>\n        <View style={styles.line} />\n      </View>\n    );\n  }\n\n  return <View style={styles.horizontal} />;\n}\n\nconst styles = StyleSheet.create({\n  horizontal: {\n    height: 1,\n    backgroundColor: \"#e5e7eb\",\n  },\n  vertical: {\n    width: 1,\n    backgroundColor: \"#e5e7eb\",\n    alignSelf: \"stretch\",\n  },\n  withText: {\n    flexDirection: \"row\",\n    alignItems: \"center\",\n    gap: 12,\n  },\n  line: {\n    flex: 1,\n    height: 1,\n    backgroundColor: \"#e5e7eb\",\n  },\n  text: {\n    fontSize: 14,\n    color: \"#6b7280\",\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}

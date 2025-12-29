@@ -1,0 +1,16 @@
+{
+  "name": "radio",
+  "type": "registry:ui",
+  "description": "单选框组件",
+  "files": [
+    {
+      "path": "ui/radio.tsx",
+      "type": "registry:ui",
+      "content": "import { Pressable, View, Text } from \"react-native\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface RadioOption {\n  label: string;\n  value: string;\n  disabled?: boolean;\n}\n\nexport interface RadioGroupProps {\n  options: RadioOption[];\n  value?: string;\n  onChange?: (value: string) => void;\n  className?: string;\n  disabled?: boolean;\n}\n\nexport function RadioGroup({\n  options,\n  value,\n  onChange,\n  className,\n  disabled,\n}: RadioGroupProps) {\n  return (\n    <View className={cn(\"gap-3\", className)}>\n      {options.map((option) => (\n        <Pressable\n          key={option.value}\n          onPress={() => !disabled && !option.disabled && onChange?.(option.value)}\n          disabled={disabled || option.disabled}\n          className={cn(\n            \"flex-row items-center gap-3\",\n            (disabled || option.disabled) && \"opacity-50\"\n          )}\n          accessible\n          accessibilityRole=\"radio\"\n          accessibilityState={{ checked: value === option.value }}\n        >\n          <View\n            className={cn(\n              \"w-5 h-5 rounded-full border-2 items-center justify-center\",\n              value === option.value\n                ? \"border-blue-500\"\n                : \"border-gray-300 dark:border-gray-600\"\n            )}\n          >\n            {value === option.value && (\n              <View className=\"w-2.5 h-2.5 rounded-full bg-blue-500\" />\n            )}\n          </View>\n          <Text className=\"text-base text-gray-900 dark:text-white\">\n            {option.label}\n          </Text>\n        </Pressable>\n      ))}\n    </View>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

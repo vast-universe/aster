@@ -1,0 +1,40 @@
+{
+  "frameworks": [
+    "expo",
+    "next",
+    "vue",
+    "nuxt"
+  ],
+  "registries": {
+    "expo": {
+      "displayName": "Expo (React Native)",
+      "styles": [
+        "nativewind",
+        "stylesheet"
+      ]
+    },
+    "next": {
+      "displayName": "Next.js",
+      "styles": [
+        "tailwind",
+        "css"
+      ]
+    },
+    "vue": {
+      "displayName": "Vue (Vite)",
+      "styles": [
+        "tailwind",
+        "unocss",
+        "css"
+      ]
+    },
+    "nuxt": {
+      "displayName": "Nuxt",
+      "styles": [
+        "tailwind",
+        "unocss",
+        "css"
+      ]
+    }
+  }
+}

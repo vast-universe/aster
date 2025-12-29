@@ -1,0 +1,16 @@
+{
+  "name": "dialog",
+  "type": "registry:ui",
+  "description": "对话框组件，带标题和操作按钮",
+  "files": [
+    {
+      "path": "ui/dialog.tsx",
+      "type": "registry:ui",
+      "content": "import { Modal, View, Text, Pressable } from \"react-native\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface DialogProps {\n  visible: boolean;\n  onClose: () => void;\n  title?: string;\n  description?: string;\n  children?: React.ReactNode;\n  className?: string;\n}\n\nexport interface DialogFooterProps {\n  children: React.ReactNode;\n  className?: string;\n}\n\nexport interface DialogButtonProps {\n  children: React.ReactNode;\n  onPress?: () => void;\n  variant?: \"default\" | \"destructive\";\n  className?: string;\n}\n\nexport function Dialog({\n  visible,\n  onClose,\n  title,\n  description,\n  children,\n  className,\n}: DialogProps) {\n  return (\n    <Modal\n      visible={visible}\n      transparent\n      animationType=\"fade\"\n      onRequestClose={onClose}\n    >\n      <Pressable\n        className=\"flex-1 bg-black/50 justify-center items-center p-4\"\n        onPress={onClose}\n      >\n        <Pressable\n          className={cn(\n            \"bg-white dark:bg-gray-900 rounded-xl w-full max-w-sm\",\n            className\n          )}\n          onPress={(e) => e.stopPropagation()}\n        >\n          <View className=\"p-6\">\n            {title && (\n              <Text className=\"text-lg font-semibold text-gray-900 dark:text-white mb-2\">\n                {title}\n              </Text>\n            )}\n            {description && (\n              <Text className=\"text-sm text-gray-600 dark:text-gray-400\">\n                {description}\n              </Text>\n            )}\n          </View>\n          {children}\n        </Pressable>\n      </Pressable>\n    </Modal>\n  );\n}\n\nexport function DialogFooter({ children, className }: DialogFooterProps) {\n  return (\n    <View\n      className={cn(\n        \"flex-row gap-2 p-4 border-t border-gray-200 dark:border-gray-700\",\n        className\n      )}\n    >\n      {children}\n    </View>\n  );\n}\n\nexport function DialogButton({\n  children,\n  onPress,\n  variant = \"default\",\n  className,\n}: DialogButtonProps) {\n  return (\n    <Pressable\n      onPress={onPress}\n      className={cn(\n        \"flex-1 py-2.5 rounded-lg items-center\",\n        variant === \"destructive\"\n          ? \"bg-red-500\"\n          : \"bg-blue-500\",\n        className\n      )}\n    >\n      <Text className=\"text-white font-medium\">{children}</Text>\n    </Pressable>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

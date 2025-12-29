@@ -1,0 +1,16 @@
+{
+  "name": "zustand",
+  "type": "registry:config",
+  "description": "Zustand 轻量状态管理",
+  "files": [
+    {
+      "path": "configs/zustand/store/index.ts",
+      "type": "registry:config",
+      "target": "store/index.ts",
+      "content": "import { create } from \"zustand\";\nimport { persist } from \"zustand/middleware\";\n\ninterface AppState {\n  // 用户信息\n  user: { id: string; name: string } | null;\n  setUser: (user: AppState[\"user\"]) => void;\n  \n  // 主题\n  theme: \"light\" | \"dark\";\n  toggleTheme: () => void;\n}\n\nexport const useAppStore = create<AppState>()(\n  persist(\n    (set) => ({\n      user: null,\n      setUser: (user) => set({ user }),\n      \n      theme: \"light\",\n      toggleTheme: () =>\n        set((state) => ({ theme: state.theme === \"light\" ? \"dark\" : \"light\" })),\n    }),\n    {\n      name: \"app-storage\",\n      partialize: (state) => ({ theme: state.theme }),\n    }\n  )\n);\n"
+    }
+  ],
+  "dependencies": [
+    "zustand"
+  ]
+}

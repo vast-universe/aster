@@ -1,0 +1,95 @@
+[
+  {
+    "name": "nativewind",
+    "type": "registry:config",
+    "description": "NativeWind v5 (Tailwind CSS for React Native)",
+    "dependencies": [
+      "nativewind",
+      "react-native-reanimated",
+      "react-native-safe-area-context",
+      "clsx",
+      "tailwind-merge",
+      "class-variance-authority"
+    ],
+    "devDependencies": [
+      "tailwindcss",
+      "@tailwindcss/postcss"
+    ],
+    "registryDependencies": []
+  },
+  {
+    "name": "zustand",
+    "type": "registry:config",
+    "description": "Zustand 轻量状态管理",
+    "dependencies": [
+      "zustand"
+    ],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "axios",
+    "type": "registry:config",
+    "description": "Axios HTTP 请求封装",
+    "dependencies": [
+      "axios"
+    ],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "tanstack",
+    "type": "registry:config",
+    "description": "TanStack Query 数据请求",
+    "dependencies": [
+      "@tanstack/react-query"
+    ],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "i18n",
+    "type": "registry:config",
+    "description": "i18next 国际化",
+    "dependencies": [
+      "i18next",
+      "react-i18next"
+    ],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "toast",
+    "type": "registry:config",
+    "description": "Toast 消息提示",
+    "dependencies": [
+      "react-native-toast-message"
+    ],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "form",
+    "type": "registry:config",
+    "description": "react-hook-form + zod 表单验证",
+    "dependencies": [
+      "react-hook-form",
+      "zod",
+      "@hookform/resolvers"
+    ],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "lint",
+    "type": "registry:config",
+    "description": "Husky + Prettier + lint-staged 代码规范",
+    "dependencies": [],
+    "devDependencies": [
+      "prettier",
+      "husky",
+      "lint-staged"
+    ],
+    "registryDependencies": []
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "name": "tanstack",
+  "type": "registry:config",
+  "description": "TanStack Query 数据请求",
+  "files": [
+    {
+      "path": "configs/tanstack/lib/query-client.ts",
+      "type": "registry:lib",
+      "target": "lib/query-client.ts",
+      "content": "import { QueryClient } from \"@tanstack/react-query\";\n\nexport const queryClient = new QueryClient({\n  defaultOptions: {\n    queries: {\n      staleTime: 1000 * 60 * 5, // 5 分钟\n      gcTime: 1000 * 60 * 30, // 30 分钟 (原 cacheTime)\n      retry: 1,\n      refetchOnWindowFocus: false,\n    },\n    mutations: {\n      retry: 0,\n    },\n  },\n});\n"
+    }
+  ],
+  "dependencies": [
+    "@tanstack/react-query"
+  ]
+}

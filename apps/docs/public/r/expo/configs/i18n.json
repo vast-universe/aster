@@ -1,0 +1,29 @@
+{
+  "name": "i18n",
+  "type": "registry:config",
+  "description": "i18next 国际化",
+  "files": [
+    {
+      "path": "configs/i18n/lib/i18n/index.ts",
+      "type": "registry:lib",
+      "target": "lib/i18n/index.ts",
+      "content": "import i18n from \"i18next\";\nimport { initReactI18next } from \"react-i18next\";\nimport zh from \"./locales/zh\";\nimport en from \"./locales/en\";\n\ni18n.use(initReactI18next).init({\n  resources: {\n    zh: { translation: zh },\n    en: { translation: en },\n  },\n  lng: \"zh\",\n  fallbackLng: \"zh\",\n  interpolation: {\n    escapeValue: false,\n  },\n});\n\nexport default i18n;\n"
+    },
+    {
+      "path": "configs/i18n/lib/i18n/locales/zh.ts",
+      "type": "registry:lib",
+      "target": "lib/i18n/locales/zh.ts",
+      "content": "export default {\n  common: {\n    confirm: \"确认\",\n    cancel: \"取消\",\n    save: \"保存\",\n    delete: \"删除\",\n    edit: \"编辑\",\n    loading: \"加载中...\",\n    success: \"操作成功\",\n    error: \"操作失败\",\n  },\n  auth: {\n    login: \"登录\",\n    logout: \"退出登录\",\n    register: \"注册\",\n  },\n};\n"
+    },
+    {
+      "path": "configs/i18n/lib/i18n/locales/en.ts",
+      "type": "registry:lib",
+      "target": "lib/i18n/locales/en.ts",
+      "content": "export default {\n  common: {\n    confirm: \"Confirm\",\n    cancel: \"Cancel\",\n    save: \"Save\",\n    delete: \"Delete\",\n    edit: \"Edit\",\n    loading: \"Loading...\",\n    success: \"Success\",\n    error: \"Error\",\n  },\n  auth: {\n    login: \"Login\",\n    logout: \"Logout\",\n    register: \"Register\",\n  },\n};\n"
+    }
+  ],
+  "dependencies": [
+    "i18next",
+    "react-i18next"
+  ]
+}

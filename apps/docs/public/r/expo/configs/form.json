@@ -1,0 +1,18 @@
+{
+  "name": "form",
+  "type": "registry:config",
+  "description": "react-hook-form + zod 表单验证",
+  "files": [
+    {
+      "path": "configs/form/lib/form/index.ts",
+      "type": "registry:lib",
+      "target": "lib/form/index.ts",
+      "content": "import { z } from \"zod\";\n\n// 常用验证规则\nexport const schemas = {\n  email: z.string().email(\"请输入有效的邮箱地址\"),\n  password: z.string().min(6, \"密码至少 6 位\").max(20, \"密码最多 20 位\"),\n  phone: z.string().regex(/^1[3-9]\\d{9}$/, \"请输入有效的手机号\"),\n  required: (message = \"此字段必填\") => z.string().min(1, message),\n};\n\n// 登录表单\nexport const loginSchema = z.object({\n  email: schemas.email,\n  password: schemas.password,\n});\n\n// 注册表单\nexport const registerSchema = z\n  .object({\n    email: schemas.email,\n    password: schemas.password,\n    confirmPassword: z.string(),\n  })\n  .refine((data) => data.password === data.confirmPassword, {\n    message: \"两次密码不一致\",\n    path: [\"confirmPassword\"],\n  });\n\nexport type LoginForm = z.infer<typeof loginSchema>;\nexport type RegisterForm = z.infer<typeof registerSchema>;\n"
+    }
+  ],
+  "dependencies": [
+    "react-hook-form",
+    "zod",
+    "@hookform/resolvers"
+  ]
+}

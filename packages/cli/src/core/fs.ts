@@ -106,9 +106,9 @@ export async function getFileDiff(
 const COMPONENT_EXTENSIONS = [".tsx", ".ts", ".vue"];
 
 /**
- * 获取已安装的组件列表
+ * 获取目录中已安装的组件列表 (基于文件系统)
  */
-export function getInstalledComponents(componentsDir: string): string[] {
+export function getInstalledComponentsFromDir(componentsDir: string): string[] {
   if (!fileExists(componentsDir)) {
     return [];
   }
@@ -126,6 +126,11 @@ export function getInstalledComponents(componentsDir: string): string[] {
       return f;
     });
 }
+
+/**
+ * @deprecated 使用 getInstalledComponentsFromDir 代替
+ */
+export const getInstalledComponents = getInstalledComponentsFromDir;
 
 /**
  * 查找组件文件路径 (自动匹配扩展名)

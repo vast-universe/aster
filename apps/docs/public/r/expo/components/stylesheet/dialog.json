@@ -1,0 +1,14 @@
+{
+  "name": "dialog",
+  "type": "registry:ui",
+  "description": "对话框组件，带标题和操作按钮",
+  "files": [
+    {
+      "path": "ui/dialog.tsx",
+      "type": "registry:ui",
+      "content": "import { Modal, View, Text, Pressable, StyleSheet } from \"react-native\";\n\nexport interface DialogProps {\n  visible: boolean;\n  onClose: () => void;\n  title?: string;\n  description?: string;\n  children?: React.ReactNode;\n}\n\nexport interface DialogFooterProps {\n  children: React.ReactNode;\n}\n\nexport interface DialogButtonProps {\n  children: React.ReactNode;\n  onPress?: () => void;\n  variant?: \"default\" | \"destructive\";\n}\n\nexport function Dialog({\n  visible,\n  onClose,\n  title,\n  description,\n  children,\n}: DialogProps) {\n  return (\n    <Modal\n      visible={visible}\n      transparent\n      animationType=\"fade\"\n      onRequestClose={onClose}\n    >\n      <Pressable style={styles.overlay} onPress={onClose}>\n        <Pressable style={styles.dialog} onPress={(e) => e.stopPropagation()}>\n          <View style={styles.content}>\n            {title && <Text style={styles.title}>{title}</Text>}\n            {description && <Text style={styles.description}>{description}</Text>}\n          </View>\n          {children}\n        </Pressable>\n      </Pressable>\n    </Modal>\n  );\n}\n\nexport function DialogFooter({ children }: DialogFooterProps) {\n  return <View style={styles.footer}>{children}</View>;\n}\n\nexport function DialogButton({\n  children,\n  onPress,\n  variant = \"default\",\n}: DialogButtonProps) {\n  return (\n    <Pressable\n      onPress={onPress}\n      style={[\n        styles.button,\n        variant === \"destructive\" ? styles.buttonDestructive : styles.buttonDefault,\n      ]}\n    >\n      <Text style={styles.buttonText}>{children}</Text>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  overlay: {\n    flex: 1,\n    backgroundColor: \"rgba(0,0,0,0.5)\",\n    justifyContent: \"center\",\n    alignItems: \"center\",\n    padding: 16,\n  },\n  dialog: {\n    backgroundColor: \"#fff\",\n    borderRadius: 12,\n    width: \"100%\",\n    maxWidth: 320,\n  },\n  content: {\n    padding: 24,\n  },\n  title: {\n    fontSize: 18,\n    fontWeight: \"600\",\n    color: \"#111827\",\n    marginBottom: 8,\n  },\n  description: {\n    fontSize: 14,\n    color: \"#6b7280\",\n  },\n  footer: {\n    flexDirection: \"row\",\n    gap: 8,\n    padding: 16,\n    borderTopWidth: 1,\n    borderTopColor: \"#e5e7eb\",\n  },\n  button: {\n    flex: 1,\n    paddingVertical: 10,\n    borderRadius: 8,\n    alignItems: \"center\",\n  },\n  buttonDefault: {\n    backgroundColor: \"#3b82f6\",\n  },\n  buttonDestructive: {\n    backgroundColor: \"#ef4444\",\n  },\n  buttonText: {\n    color: \"#fff\",\n    fontWeight: \"500\",\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}

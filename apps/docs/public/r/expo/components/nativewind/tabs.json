@@ -1,0 +1,16 @@
+{
+  "name": "tabs",
+  "type": "registry:ui",
+  "description": "标签页组件",
+  "files": [
+    {
+      "path": "ui/tabs.tsx",
+      "type": "registry:ui",
+      "content": "import { useState } from \"react\";\nimport { View, Text, Pressable, ScrollView } from \"react-native\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface Tab {\n  key: string;\n  label: string;\n  content: React.ReactNode;\n}\n\nexport interface TabsProps {\n  tabs: Tab[];\n  defaultKey?: string;\n  onChange?: (key: string) => void;\n  className?: string;\n}\n\nexport function Tabs({ tabs, defaultKey, onChange, className }: TabsProps) {\n  const [activeKey, setActiveKey] = useState(defaultKey || tabs[0]?.key);\n\n  const handleChange = (key: string) => {\n    setActiveKey(key);\n    onChange?.(key);\n  };\n\n  const activeTab = tabs.find((tab) => tab.key === activeKey);\n\n  return (\n    <View className={cn(\"flex-1\", className)}>\n      <ScrollView\n        horizontal\n        showsHorizontalScrollIndicator={false}\n        className=\"border-b border-gray-200 dark:border-gray-700\"\n      >\n        <View className=\"flex-row\">\n          {tabs.map((tab) => (\n            <Pressable\n              key={tab.key}\n              onPress={() => handleChange(tab.key)}\n              className={cn(\n                \"px-4 py-3 border-b-2\",\n                activeKey === tab.key\n                  ? \"border-blue-500\"\n                  : \"border-transparent\"\n              )}\n              accessible\n              accessibilityRole=\"tab\"\n              accessibilityState={{ selected: activeKey === tab.key }}\n            >\n              <Text\n                className={cn(\n                  \"text-sm font-medium\",\n                  activeKey === tab.key\n                    ? \"text-blue-500\"\n                    : \"text-gray-600 dark:text-gray-400\"\n                )}\n              >\n                {tab.label}\n              </Text>\n            </Pressable>\n          ))}\n        </View>\n      </ScrollView>\n      <View className=\"flex-1 p-4\">{activeTab?.content}</View>\n    </View>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

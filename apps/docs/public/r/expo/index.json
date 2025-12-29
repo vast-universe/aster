@@ -1,0 +1,65 @@
+{
+  "name": "expo",
+  "displayName": "Expo (React Native)",
+  "styles": [
+    "nativewind",
+    "stylesheet"
+  ],
+  "configs": [
+    "nativewind",
+    "zustand",
+    "axios",
+    "tanstack",
+    "i18n",
+    "toast",
+    "form",
+    "lint"
+  ],
+  "components": {
+    "nativewind": [
+      "button",
+      "input",
+      "textarea",
+      "checkbox",
+      "radio",
+      "switch",
+      "select",
+      "slider",
+      "avatar",
+      "badge",
+      "card",
+      "skeleton",
+      "divider",
+      "tabs",
+      "modal",
+      "dialog",
+      "action-sheet",
+      "alert",
+      "toast",
+      "loading",
+      "utils"
+    ],
+    "stylesheet": [
+      "button",
+      "input",
+      "textarea",
+      "checkbox",
+      "radio",
+      "switch",
+      "select",
+      "slider",
+      "avatar",
+      "badge",
+      "card",
+      "skeleton",
+      "divider",
+      "tabs",
+      "modal",
+      "dialog",
+      "action-sheet",
+      "alert",
+      "toast",
+      "loading"
+    ]
+  }
+}

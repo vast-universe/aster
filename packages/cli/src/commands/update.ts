@@ -12,7 +12,7 @@ import { fetchComponentFromSource } from "../utils/fetcher";
 import {
   writeFile,
   readFile,
-  getInstalledComponents,
+  getInstalledComponentsFromDir,
   findComponentFile,
 } from "../core/fs";
 
@@ -35,7 +35,7 @@ export async function update(
     const componentsDir = config.paths.components;
 
     // 获取已安装的组件
-    const installed = getInstalledComponents(componentsDir);
+    const installed = getInstalledComponentsFromDir(componentsDir);
 
     if (installed.length === 0) {
       console.log(chalk.yellow("\n没有已安装的组件\n"));

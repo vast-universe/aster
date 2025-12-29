@@ -8,7 +8,7 @@ import {
   getFrameworkChoices,
   type FrameworkConfig,
   type FrameworkName,
-} from "../utils/frameworks";
+} from "../adapters";
 import {
   getPreset,
   getAllPresets,
@@ -95,6 +95,22 @@ export async function create(
         frameworkName = await selectFramework(options);
         const adapter = getFrameworkAdapter(frameworkName);
 
+        // 尝试从远程加载配置
+        if (adapter.loadRemoteConfig) {
+          try {
+            const remoteMeta = await adapter.loadRemoteConfig();
+            // 更新 adapter 的配置
+            Object.assign(adapter, {
+              styles: remoteMeta.styles,
+              stateLibs: remoteMeta.stateLibs,
+              extraLibs: remoteMeta.extraLibs,
+              defaultPaths: remoteMeta.defaultPaths,
+            });
+          } catch {
+            // 使用默认配置
+          }
+        }
+
         console.log(chalk.dim(`\n框架: ${adapter.displayName}\n`));
 
         // 获取项目配置
@@ -135,6 +151,16 @@ export async function create(
       spinner.start("配置代码规范...");
       await adapter.setupLint(targetDir);
       spinner.succeed("代码规范配置完成");
+    }
+
+    // 5.5 配置额外库 (状态管理、工具库等)
+    if (adapter.setupExtras) {
+      const extrasToInstall = config.extraLibs.filter((l) => l !== "lint");
+      if (config.stateLib !== "none" || extrasToInstall.length > 0) {
+        spinner.start("配置额外库...");
+        await adapter.setupExtras(targetDir, config);
+        spinner.succeed("额外库配置完成");
+      }
     }
 
     // 6. 生成 Aster 配置

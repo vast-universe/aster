@@ -1,0 +1,16 @@
+{
+  "name": "utils",
+  "type": "registry:lib",
+  "description": "工具函数 (cn)",
+  "files": [
+    {
+      "path": "lib/aster-utils.ts",
+      "type": "registry:lib",
+      "content": "import { clsx, type ClassValue } from \"clsx\";\nimport { twMerge } from \"tailwind-merge\";\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs));\n}\n"
+    }
+  ],
+  "dependencies": [
+    "clsx",
+    "tailwind-merge"
+  ]
+}

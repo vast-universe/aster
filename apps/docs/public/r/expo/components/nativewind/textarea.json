@@ -1,0 +1,16 @@
+{
+  "name": "textarea",
+  "type": "registry:ui",
+  "description": "多行文本输入框组件",
+  "files": [
+    {
+      "path": "ui/textarea.tsx",
+      "type": "registry:ui",
+      "content": "import { TextInput, type TextInputProps } from \"react-native\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface TextareaProps extends TextInputProps {\n  error?: boolean;\n}\n\nexport function Textarea({ error, className, ...props }: TextareaProps) {\n  return (\n    <TextInput\n      multiline\n      textAlignVertical=\"top\"\n      className={cn(\n        \"min-h-[100px] px-3 py-2 rounded-lg border bg-white dark:bg-gray-900\",\n        \"text-base text-gray-900 dark:text-white placeholder:text-gray-400\",\n        error\n          ? \"border-red-500\"\n          : \"border-gray-300 dark:border-gray-600\",\n        className\n      )}\n      accessible\n      accessibilityRole=\"text\"\n      {...props}\n    />\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "loading",
+  "type": "registry:ui",
+  "description": "加载指示器组件",
+  "files": [
+    {
+      "path": "ui/loading.tsx",
+      "type": "registry:ui",
+      "content": "import { View, ActivityIndicator, Text, StyleSheet, type ViewStyle } from \"react-native\";\n\nexport interface LoadingProps {\n  size?: \"small\" | \"large\";\n  color?: string;\n  text?: string;\n  fullscreen?: boolean;\n  style?: ViewStyle;\n}\n\nexport function Loading({\n  size = \"large\",\n  color = \"#3b82f6\",\n  text,\n  fullscreen = false,\n  style,\n}: LoadingProps) {\n  const content = (\n    <View style={[styles.container, style]}>\n      <ActivityIndicator size={size} color={color} />\n      {text && <Text style={styles.text}>{text}</Text>}\n    </View>\n  );\n\n  if (fullscreen) {\n    return <View style={styles.fullscreen}>{content}</View>;\n  }\n\n  return content;\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    alignItems: \"center\",\n    justifyContent: \"center\",\n    gap: 8,\n  },\n  fullscreen: {\n    position: \"absolute\",\n    top: 0,\n    left: 0,\n    right: 0,\n    bottom: 0,\n    alignItems: \"center\",\n    justifyContent: \"center\",\n    backgroundColor: \"rgba(255, 255, 255, 0.8)\",\n    zIndex: 50,\n  },\n  text: {\n    color: \"#6b7280\",\n    fontSize: 14,\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}

@@ -1,37 +1,20 @@
+/**
+ * 配置文件管理
+ */
+
 import { readFile, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
+import type { Style, AsterConfig, RegistryConfig } from "../types/config";
 
-export type Style = "nativewind" | "stylesheet";
+export type { Style, AsterConfig, RegistryConfig };
 
-export interface RegistryConfig {
-  url: string;
-  headers?: Record<string, string>;
-}
-
-export interface AsterConfig {
-  framework?: string;
-  style: Style;
-  typescript: boolean;
-  paths: {
-    components: string;
-    lib: string;
-    hooks?: string;
-  };
-  // 第三方 registry 配置
-  registries?: Record<string, string | RegistryConfig>;
-}
-
-/** 默认路径配置 */
 const DEFAULT_PATHS = {
   components: "components/ui",
   lib: "lib",
   hooks: "hooks",
 };
 
-/**
- * 根据文件类型获取目标目录
- */
 export function getTargetDir(fileType: string, config: AsterConfig): string {
   switch (fileType) {
     case "registry:ui":
@@ -64,10 +47,7 @@ export async function saveConfig(config: AsterConfig): Promise<void> {
   await writeFile(configPath, JSON.stringify(config, null, 2));
 }
 
-export async function addRegistry(
-  name: string,
-  url: string
-): Promise<void> {
+export async function addRegistry(name: string, url: string): Promise<void> {
   const config = await getConfig();
   config.registries = config.registries || {};
   config.registries[name] = url;

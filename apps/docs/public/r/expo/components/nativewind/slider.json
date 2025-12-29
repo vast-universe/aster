@@ -1,0 +1,16 @@
+{
+  "name": "slider",
+  "type": "registry:ui",
+  "description": "滑块组件",
+  "files": [
+    {
+      "path": "ui/slider.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Text, PanResponder, Animated } from \"react-native\";\nimport { useRef, useState } from \"react\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface SliderProps {\n  value?: number;\n  min?: number;\n  max?: number;\n  step?: number;\n  onChange?: (value: number) => void;\n  disabled?: boolean;\n  showValue?: boolean;\n  className?: string;\n}\n\nexport function Slider({\n  value = 0,\n  min = 0,\n  max = 100,\n  step = 1,\n  onChange,\n  disabled,\n  showValue,\n  className,\n}: SliderProps) {\n  const [width, setWidth] = useState(0);\n  const pan = useRef(new Animated.Value(0)).current;\n\n  const percentage = ((value - min) / (max - min)) * 100;\n\n  const panResponder = useRef(\n    PanResponder.create({\n      onStartShouldSetPanResponder: () => !disabled,\n      onMoveShouldSetPanResponder: () => !disabled,\n      onPanResponderMove: (_, gestureState) => {\n        if (width === 0) return;\n        const newPercentage = Math.max(0, Math.min(100, (gestureState.moveX / width) * 100));\n        const newValue = min + (newPercentage / 100) * (max - min);\n        const steppedValue = Math.round(newValue / step) * step;\n        onChange?.(Math.max(min, Math.min(max, steppedValue)));\n      },\n    })\n  ).current;\n\n  return (\n    <View className={cn(\"gap-2\", className)}>\n      <View\n        className={cn(\n          \"h-6 justify-center\",\n          disabled && \"opacity-50\"\n        )}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n        {...panResponder.panHandlers}\n      >\n        <View className=\"h-1 bg-gray-200 dark:bg-gray-700 rounded-full\">\n          <View\n            className=\"h-1 bg-blue-500 rounded-full\"\n            style={{ width: `${percentage}%` }}\n          />\n        </View>\n        <View\n          className=\"absolute w-5 h-5 bg-white border-2 border-blue-500 rounded-full shadow\"\n          style={{ left: `${percentage}%`, marginLeft: -10 }}\n        />\n      </View>\n      {showValue && (\n        <Text className=\"text-sm text-gray-600 dark:text-gray-400 text-center\">\n          {value}\n        </Text>\n      )}\n    </View>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

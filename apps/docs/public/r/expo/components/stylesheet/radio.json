@@ -1,0 +1,14 @@
+{
+  "name": "radio",
+  "type": "registry:ui",
+  "description": "单选框组件",
+  "files": [
+    {
+      "path": "ui/radio.tsx",
+      "type": "registry:ui",
+      "content": "import { Pressable, View, Text, StyleSheet } from \"react-native\";\n\nexport interface RadioOption {\n  label: string;\n  value: string;\n  disabled?: boolean;\n}\n\nexport interface RadioGroupProps {\n  options: RadioOption[];\n  value?: string;\n  onChange?: (value: string) => void;\n  disabled?: boolean;\n}\n\nexport function RadioGroup({\n  options,\n  value,\n  onChange,\n  disabled,\n}: RadioGroupProps) {\n  return (\n    <View style={styles.container}>\n      {options.map((option) => (\n        <Pressable\n          key={option.value}\n          onPress={() => !disabled && !option.disabled && onChange?.(option.value)}\n          disabled={disabled || option.disabled}\n          style={[\n            styles.option,\n            (disabled || option.disabled) && styles.disabled,\n          ]}\n          accessible\n          accessibilityRole=\"radio\"\n          accessibilityState={{ checked: value === option.value }}\n        >\n          <View\n            style={[\n              styles.radio,\n              value === option.value && styles.radioSelected,\n            ]}\n          >\n            {value === option.value && <View style={styles.radioDot} />}\n          </View>\n          <Text style={styles.label}>{option.label}</Text>\n        </Pressable>\n      ))}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    gap: 12,\n  },\n  option: {\n    flexDirection: \"row\",\n    alignItems: \"center\",\n    gap: 12,\n  },\n  disabled: {\n    opacity: 0.5,\n  },\n  radio: {\n    width: 20,\n    height: 20,\n    borderRadius: 10,\n    borderWidth: 2,\n    borderColor: \"#d1d5db\",\n    alignItems: \"center\",\n    justifyContent: \"center\",\n  },\n  radioSelected: {\n    borderColor: \"#3b82f6\",\n  },\n  radioDot: {\n    width: 10,\n    height: 10,\n    borderRadius: 5,\n    backgroundColor: \"#3b82f6\",\n  },\n  label: {\n    fontSize: 16,\n    color: \"#111827\",\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}

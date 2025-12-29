@@ -1,0 +1,14 @@
+{
+  "name": "tabs",
+  "type": "registry:ui",
+  "description": "标签页组件",
+  "files": [
+    {
+      "path": "ui/tabs.tsx",
+      "type": "registry:ui",
+      "content": "import { useState } from \"react\";\nimport { View, Text, Pressable, ScrollView, StyleSheet } from \"react-native\";\n\nexport interface Tab {\n  key: string;\n  label: string;\n  content: React.ReactNode;\n}\n\nexport interface TabsProps {\n  tabs: Tab[];\n  defaultKey?: string;\n  onChange?: (key: string) => void;\n}\n\nexport function Tabs({ tabs, defaultKey, onChange }: TabsProps) {\n  const [activeKey, setActiveKey] = useState(defaultKey || tabs[0]?.key);\n\n  const handleChange = (key: string) => {\n    setActiveKey(key);\n    onChange?.(key);\n  };\n\n  const activeTab = tabs.find((tab) => tab.key === activeKey);\n\n  return (\n    <View style={styles.container}>\n      <ScrollView\n        horizontal\n        showsHorizontalScrollIndicator={false}\n        style={styles.tabBar}\n      >\n        <View style={styles.tabList}>\n          {tabs.map((tab) => (\n            <Pressable\n              key={tab.key}\n              onPress={() => handleChange(tab.key)}\n              style={[\n                styles.tab,\n                activeKey === tab.key && styles.tabActive,\n              ]}\n              accessible\n              accessibilityRole=\"tab\"\n              accessibilityState={{ selected: activeKey === tab.key }}\n            >\n              <Text\n                style={[\n                  styles.tabText,\n                  activeKey === tab.key && styles.tabTextActive,\n                ]}\n              >\n                {tab.label}\n              </Text>\n            </Pressable>\n          ))}\n        </View>\n      </ScrollView>\n      <View style={styles.content}>{activeTab?.content}</View>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    flex: 1,\n  },\n  tabBar: {\n    borderBottomWidth: 1,\n    borderBottomColor: \"#e5e7eb\",\n  },\n  tabList: {\n    flexDirection: \"row\",\n  },\n  tab: {\n    paddingHorizontal: 16,\n    paddingVertical: 12,\n    borderBottomWidth: 2,\n    borderBottomColor: \"transparent\",\n  },\n  tabActive: {\n    borderBottomColor: \"#3b82f6\",\n  },\n  tabText: {\n    fontSize: 14,\n    fontWeight: \"500\",\n    color: \"#6b7280\",\n  },\n  tabTextActive: {\n    color: \"#3b82f6\",\n  },\n  content: {\n    flex: 1,\n    padding: 16,\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}

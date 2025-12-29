@@ -5,7 +5,7 @@
 import prompts from "prompts";
 import chalk from "chalk";
 import { writeJson, fileExists } from "../core/fs";
-import { getFrameworkChoices, getFrameworkAdapter } from "../utils/frameworks";
+import { getFrameworkChoices, getFrameworkAdapter } from "../adapters";
 
 export async function init(): Promise<void> {
   console.log(chalk.bold("\n🚀 初始化 Aster\n"));

@@ -1,0 +1,16 @@
+{
+  "name": "toast",
+  "type": "registry:ui",
+  "description": "消息提示组件",
+  "files": [
+    {
+      "path": "ui/toast.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Text, Animated, Pressable } from \"react-native\";\nimport { useEffect, useRef, useState, createContext, useContext } from \"react\";\nimport { cn } from \"@/lib/aster-utils\";\n\ntype ToastType = \"default\" | \"success\" | \"error\" | \"warning\";\n\ninterface Toast {\n  id: string;\n  message: string;\n  type: ToastType;\n  duration?: number;\n}\n\ninterface ToastContextValue {\n  toast: (message: string, type?: ToastType, duration?: number) => void;\n}\n\nconst ToastContext = createContext<ToastContextValue | null>(null);\n\nexport function useToast() {\n  const context = useContext(ToastContext);\n  if (!context) {\n    throw new Error(\"useToast must be used within ToastProvider\");\n  }\n  return context;\n}\n\nconst typeStyles = {\n  default: \"bg-gray-800\",\n  success: \"bg-green-500\",\n  error: \"bg-red-500\",\n  warning: \"bg-yellow-500\",\n};\n\nfunction ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) {\n  const opacity = useRef(new Animated.Value(0)).current;\n  const translateY = useRef(new Animated.Value(-20)).current;\n\n  useEffect(() => {\n    Animated.parallel([\n      Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),\n      Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true }),\n    ]).start();\n\n    const timer = setTimeout(() => {\n      Animated.parallel([\n        Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }),\n        Animated.timing(translateY, { toValue: -20, duration: 200, useNativeDriver: true }),\n      ]).start(() => onRemove());\n    }, toast.duration || 3000);\n\n    return () => clearTimeout(timer);\n  }, [opacity, translateY, toast.duration, onRemove]);\n\n  return (\n    <Animated.View\n      style={{ opacity, transform: [{ translateY }] }}\n      className={cn(\"rounded-lg px-4 py-3 mb-2 mx-4\", typeStyles[toast.type])}\n    >\n      <Pressable onPress={onRemove}>\n        <Text className=\"text-white text-center font-medium\">{toast.message}</Text>\n      </Pressable>\n    </Animated.View>\n  );\n}\n\nexport function ToastProvider({ children }: { children: React.ReactNode }) {\n  const [toasts, setToasts] = useState<Toast[]>([]);\n\n  const toast = (message: string, type: ToastType = \"default\", duration = 3000) => {\n    const id = Math.random().toString(36).slice(2);\n    setToasts((prev) => [...prev, { id, message, type, duration }]);\n  };\n\n  const removeToast = (id: string) => {\n    setToasts((prev) => prev.filter((t) => t.id !== id));\n  };\n\n  return (\n    <ToastContext.Provider value={{ toast }}>\n      {children}\n      <View className=\"absolute top-12 left-0 right-0 z-50\">\n        {toasts.map((t) => (\n          <ToastItem key={t.id} toast={t} onRemove={() => removeToast(t.id)} />\n        ))}\n      </View>\n    </ToastContext.Provider>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

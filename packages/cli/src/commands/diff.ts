@@ -4,10 +4,10 @@
 
 import chalk from "chalk";
 import { getConfig, hasConfig } from "../utils/config";
-import { fetchComponent, fetchRegistry } from "../utils/registry";
+import { fetchComponent, fetchRegistry } from "../services/registry";
 import {
   readFile,
-  getInstalledComponents,
+  getInstalledComponentsFromDir as getInstalledComponents,
   findComponentFile,
 } from "../core/fs";
 
@@ -41,7 +41,7 @@ export async function diff(componentName?: string): Promise<void> {
 async function diffAllComponents(
   config: Awaited<ReturnType<typeof getConfig>>
 ) {
-  const registry = await fetchRegistry(config.style);
+  const registry = await fetchRegistry("expo", config.style);
   const installed = getInstalledComponents(config.paths.components);
   const componentsWithUpdates: string[] = [];
 
@@ -55,7 +55,7 @@ async function diffAllComponents(
     if (!localPath) continue;
 
     try {
-      const remoteItem = await fetchComponent(item.name, config.style);
+      const remoteItem = await fetchComponent(item.name, "expo", config.style);
       const localContent = await readFile(localPath);
       const remoteContent = remoteItem.files[0]?.content || "";
 
@@ -94,7 +94,7 @@ async function diffSingleComponent(
     return;
   }
 
-  const remoteItem = await fetchComponent(name, config.style);
+  const remoteItem = await fetchComponent(name, "expo", config.style);
   const localContent = await readFile(localPath);
   const remoteContent = remoteItem.files[0]?.content || "";
 
