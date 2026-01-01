@@ -1,0 +1,16 @@
+{
+  "name": "modal",
+  "type": "registry:ui",
+  "description": "模态框组件",
+  "files": [
+    {
+      "path": "ui/modal.tsx",
+      "type": "registry:ui",
+      "content": "import { Modal as RNModal, View, Pressable, Text } from \"react-native\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface ModalProps {\n  visible: boolean;\n  onClose: () => void;\n  title?: string;\n  children: React.ReactNode;\n  className?: string;\n}\n\nexport function Modal({\n  visible,\n  onClose,\n  title,\n  children,\n  className,\n}: ModalProps) {\n  return (\n    <RNModal\n      visible={visible}\n      transparent\n      animationType=\"fade\"\n      onRequestClose={onClose}\n    >\n      <Pressable\n        className=\"flex-1 justify-center items-center bg-black/50\"\n        onPress={onClose}\n      >\n        <Pressable\n          className={cn(\n            \"bg-white dark:bg-gray-900 rounded-xl p-6 mx-4 w-full max-w-sm\",\n            className\n          )}\n          onPress={(e) => e.stopPropagation()}\n        >\n          {title && (\n            <Text className=\"text-lg font-semibold mb-4 text-gray-900 dark:text-white\">\n              {title}\n            </Text>\n          )}\n          {children}\n        </Pressable>\n      </Pressable>\n    </RNModal>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

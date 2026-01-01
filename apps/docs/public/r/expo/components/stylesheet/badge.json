@@ -1,0 +1,14 @@
+{
+  "name": "badge",
+  "type": "registry:ui",
+  "description": "徽章组件",
+  "files": [
+    {
+      "path": "ui/badge.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Text, StyleSheet, type ViewStyle } from \"react-native\";\n\ntype BadgeVariant = \"default\" | \"secondary\" | \"destructive\" | \"success\" | \"outline\";\n\nexport interface BadgeProps {\n  children: React.ReactNode;\n  variant?: BadgeVariant;\n  style?: ViewStyle;\n}\n\nexport function Badge({ children, variant = \"default\", style }: BadgeProps) {\n  return (\n    <View style={[styles.badge, styles[`variant_${variant}`], style]}>\n      <Text style={[styles.text, styles[`text_${variant}`]]}>{children}</Text>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  badge: {\n    borderRadius: 9999,\n    paddingHorizontal: 10,\n    paddingVertical: 2,\n    alignItems: \"center\",\n    justifyContent: \"center\",\n  },\n  variant_default: {\n    backgroundColor: \"#3b82f6\",\n  },\n  variant_secondary: {\n    backgroundColor: \"#6b7280\",\n  },\n  variant_destructive: {\n    backgroundColor: \"#ef4444\",\n  },\n  variant_success: {\n    backgroundColor: \"#22c55e\",\n  },\n  variant_outline: {\n    backgroundColor: \"transparent\",\n    borderWidth: 1,\n    borderColor: \"#d1d5db\",\n  },\n  text: {\n    fontSize: 12,\n    fontWeight: \"500\",\n  },\n  text_default: {\n    color: \"#fff\",\n  },\n  text_secondary: {\n    color: \"#fff\",\n  },\n  text_destructive: {\n    color: \"#fff\",\n  },\n  text_success: {\n    color: \"#fff\",\n  },\n  text_outline: {\n    color: \"#111827\",\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}

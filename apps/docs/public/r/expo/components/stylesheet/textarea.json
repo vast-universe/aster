@@ -1,0 +1,14 @@
+{
+  "name": "textarea",
+  "type": "registry:ui",
+  "description": "多行文本输入框组件",
+  "files": [
+    {
+      "path": "ui/textarea.tsx",
+      "type": "registry:ui",
+      "content": "import { TextInput, StyleSheet, type TextInputProps } from \"react-native\";\n\nexport interface TextareaProps extends TextInputProps {\n  error?: boolean;\n}\n\nexport function Textarea({ error, style, ...props }: TextareaProps) {\n  return (\n    <TextInput\n      multiline\n      textAlignVertical=\"top\"\n      style={[styles.textarea, error && styles.error, style]}\n      placeholderTextColor=\"#9ca3af\"\n      accessible\n      accessibilityRole=\"text\"\n      {...props}\n    />\n  );\n}\n\nconst styles = StyleSheet.create({\n  textarea: {\n    minHeight: 100,\n    paddingHorizontal: 12,\n    paddingVertical: 8,\n    borderRadius: 8,\n    borderWidth: 1,\n    borderColor: \"#d1d5db\",\n    backgroundColor: \"#fff\",\n    fontSize: 16,\n    color: \"#111827\",\n  },\n  error: {\n    borderColor: \"#ef4444\",\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}

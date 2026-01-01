@@ -1,0 +1,18 @@
+{
+  "name": "alert",
+  "type": "registry:ui",
+  "description": "警告提示组件",
+  "files": [
+    {
+      "path": "ui/alert.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Text, Pressable } from \"react-native\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/aster-utils\";\n\nconst alertVariants = cva(\n  \"p-4 rounded-lg flex-row gap-3\",\n  {\n    variants: {\n      variant: {\n        default: \"bg-gray-100 dark:bg-gray-800\",\n        info: \"bg-blue-50 dark:bg-blue-900/20\",\n        success: \"bg-green-50 dark:bg-green-900/20\",\n        warning: \"bg-yellow-50 dark:bg-yellow-900/20\",\n        error: \"bg-red-50 dark:bg-red-900/20\",\n      },\n    },\n    defaultVariants: {\n      variant: \"default\",\n    },\n  }\n);\n\nconst alertIconMap = {\n  default: \"ℹ️\",\n  info: \"ℹ️\",\n  success: \"✅\",\n  warning: \"⚠️\",\n  error: \"❌\",\n};\n\nconst alertTextVariants = cva(\"text-sm\", {\n  variants: {\n    variant: {\n      default: \"text-gray-700 dark:text-gray-300\",\n      info: \"text-blue-700 dark:text-blue-300\",\n      success: \"text-green-700 dark:text-green-300\",\n      warning: \"text-yellow-700 dark:text-yellow-300\",\n      error: \"text-red-700 dark:text-red-300\",\n    },\n  },\n  defaultVariants: {\n    variant: \"default\",\n  },\n});\n\nexport interface AlertProps extends VariantProps<typeof alertVariants> {\n  title?: string;\n  children: React.ReactNode;\n  onClose?: () => void;\n  className?: string;\n}\n\nexport function Alert({\n  title,\n  children,\n  variant,\n  onClose,\n  className,\n}: AlertProps) {\n  return (\n    <View\n      className={cn(alertVariants({ variant }), className)}\n      accessible\n      accessibilityRole=\"alert\"\n    >\n      <Text className=\"text-base\">{alertIconMap[variant || \"default\"]}</Text>\n      <View className=\"flex-1\">\n        {title && (\n          <Text className={cn(\"font-semibold mb-1\", alertTextVariants({ variant }))}>\n            {title}\n          </Text>\n        )}\n        <Text className={alertTextVariants({ variant })}>{children}</Text>\n      </View>\n      {onClose && (\n        <Pressable onPress={onClose} className=\"p-1\">\n          <Text className=\"text-gray-400\">✕</Text>\n        </Pressable>\n      )}\n    </View>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "utils"
+  ]
+}

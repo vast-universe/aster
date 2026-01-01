@@ -1,70 +1,111 @@
-import chalk from "chalk";
+/**
+ * list 命令 - 列出可用/已安装的资源
+ */
 import ora from "ora";
-import { getConfig, hasConfig } from "../utils/config";
-import { fetchRegistry } from "../utils/registry";
+import { logger, readConfig, getInstalledResources } from "../lib";
+import { fetchAllResources } from "../services";
+import type { ResourceType, Framework, Style } from "../types";
 
-export async function list(): Promise<void> {
+interface ListOptions {
+  installed?: boolean;
+  configs?: boolean;
+  hooks?: boolean;
+  lib?: boolean;
+}
+
+export async function list(options: ListOptions = {}): Promise<void> {
   const spinner = ora();
+  const cwd = process.cwd();
+
+  // 列出已安装
+  if (options.installed) {
+    const installed = await getInstalledResources(cwd);
+
+    if (installed.length === 0) {
+      logger.warn("没有已安装的资源");
+      logger.dim("使用 npx aster add <name> 安装资源");
+      return;
+    }
+
+    logger.header("📦", "已安装的资源");
+
+    const groups = {
+      ui: installed.filter((i) => i.type === "ui"),
+      hook: installed.filter((i) => i.type === "hook"),
+      lib: installed.filter((i) => i.type === "lib"),
+      config: installed.filter((i) => i.type === "config"),
+    };
+
+    for (const [type, items] of Object.entries(groups)) {
+      if (items.length === 0) continue;
+
+      const label = type === "ui" ? "UI 组件" : type === "hook" ? "Hooks" : type === "lib" ? "工具函数" : "配置";
+      logger.info(label + ":");
+
+      for (const item of items) {
+        const date = new Date(item.installedAt).toLocaleDateString();
+        logger.log(`  ${item.name} @${item.namespace} v${item.version} (${date})`);
+      }
+      logger.newline();
+    }
+
+    return;
+  }
+
+  // 获取配置
+  const config = await readConfig(cwd);
+  const framework = (config?.framework || "expo") as Framework;
+  const style = (config?.style || "nativewind") as Style;
+
+  // 确定类型
+  let type: ResourceType | undefined;
+  if (options.configs) type = "config";
+  else if (options.hooks) type = "hook";
+  else if (options.lib) type = "lib";
+
+  spinner.start("获取资源列表...");
 
   try {
-    // 获取风格
-    let style: "nativewind" | "stylesheet" = "nativewind";
-    if (hasConfig()) {
-      const config = await getConfig();
-      style = config.style;
-    }
+    const { items, total } = await fetchAllResources({
+      type,
+      framework,
+      style,
+      limit: 100,
+    });
 
-    spinner.start(`获取组件列表 (${style})...`);
-    const items = await fetchRegistry(style);
     spinner.stop();
 
-    console.log(chalk.bold(`\n📦 可用组件 (${style})\n`));
-
-    // 按类型分组
-    const ui = items.filter((i) => i.type === "registry:ui");
-    const lib = items.filter((i) => i.type === "registry:lib");
-    const hooks = items.filter((i) => i.type === "registry:hook");
-
-    if (ui.length > 0) {
-      console.log(chalk.cyan("UI 组件:"));
-      for (const item of ui) {
-        console.log(
-          `  ${chalk.white(item.name)} - ${chalk.dim(item.description)}`
-        );
-      }
-      console.log();
+    if (items.length === 0) {
+      logger.warn("没有找到可用资源");
+      return;
     }
 
-    if (lib.length > 0) {
-      console.log(chalk.cyan("工具函数:"));
-      for (const item of lib) {
-        console.log(
-          `  ${chalk.white(item.name)} - ${chalk.dim(item.description)}`
-        );
+    logger.header("📦", `可用资源 (${total} 个)`);
+
+    const groups = {
+      ui: items.filter((i) => i.type === "ui"),
+      hook: items.filter((i) => i.type === "hook"),
+      lib: items.filter((i) => i.type === "lib"),
+      config: items.filter((i) => i.type === "config"),
+    };
+
+    for (const [t, list] of Object.entries(groups)) {
+      if (list.length === 0 || (type && type !== t)) continue;
+
+      const label = t === "ui" ? "UI 组件" : t === "hook" ? "Hooks" : t === "lib" ? "工具函数" : "配置";
+      logger.info(label + ":");
+
+      for (const item of list) {
+        const ns = item.namespace === "aster" ? "" : `@${item.namespace}/`;
+        const prefix = t === "ui" ? "" : `${t}:`;
+        logger.log(`  ${ns}${prefix}${item.name} - ${item.description || ""} ↓${item.downloads}`);
       }
-      console.log();
+      logger.newline();
     }
 
-    if (hooks.length > 0) {
-      console.log(chalk.cyan("Hooks:"));
-      for (const item of hooks) {
-        console.log(
-          `  ${chalk.white(item.name)} - ${chalk.dim(item.description)}`
-        );
-      }
-      console.log();
-    }
-
-    console.log(
-      chalk.dim("运行 ") +
-        chalk.cyan("npx aster add <组件名>") +
-        chalk.dim(" 添加组件\n")
-    );
+    logger.dim("运行 npx aster add <name> 安装资源");
   } catch (error) {
-    spinner.fail("获取组件列表失败");
-    if (error instanceof Error) {
-      console.error(chalk.red(`\n错误: ${error.message}\n`));
-    }
-    process.exit(1);
+    spinner.fail("获取列表失败");
+    logger.error((error as Error).message);
   }
 }

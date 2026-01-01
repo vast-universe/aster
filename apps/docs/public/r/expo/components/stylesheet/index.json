@@ -1,0 +1,162 @@
+[
+  {
+    "name": "button",
+    "type": "registry:ui",
+    "description": "可点击的按钮组件，支持多种变体和状态",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "input",
+    "type": "registry:ui",
+    "description": "文本输入框组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "textarea",
+    "type": "registry:ui",
+    "description": "多行文本输入框组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "checkbox",
+    "type": "registry:ui",
+    "description": "复选框组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "radio",
+    "type": "registry:ui",
+    "description": "单选框组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "switch",
+    "type": "registry:ui",
+    "description": "开关组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "select",
+    "type": "registry:ui",
+    "description": "下拉选择组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "slider",
+    "type": "registry:ui",
+    "description": "滑块组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "avatar",
+    "type": "registry:ui",
+    "description": "头像组件，支持图片和文字",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "badge",
+    "type": "registry:ui",
+    "description": "徽章组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "card",
+    "type": "registry:ui",
+    "description": "卡片容器组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "skeleton",
+    "type": "registry:ui",
+    "description": "骨架屏加载占位组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "divider",
+    "type": "registry:ui",
+    "description": "分割线组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "tabs",
+    "type": "registry:ui",
+    "description": "标签页组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "modal",
+    "type": "registry:ui",
+    "description": "模态框组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "dialog",
+    "type": "registry:ui",
+    "description": "对话框组件，带标题和操作按钮",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "action-sheet",
+    "type": "registry:ui",
+    "description": "操作菜单组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "alert",
+    "type": "registry:ui",
+    "description": "警告提示组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "toast",
+    "type": "registry:ui",
+    "description": "消息提示组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  },
+  {
+    "name": "loading",
+    "type": "registry:ui",
+    "description": "加载指示器组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": []
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "name": "toast",
+  "type": "registry:config",
+  "description": "Toast 消息提示",
+  "files": [
+    {
+      "path": "configs/toast/lib/toast.ts",
+      "type": "registry:lib",
+      "target": "lib/toast.ts",
+      "content": "import Toast from \"react-native-toast-message\";\n\nexport const toast = {\n  success: (message: string) => {\n    Toast.show({\n      type: \"success\",\n      text1: message,\n    });\n  },\n  error: (message: string) => {\n    Toast.show({\n      type: \"error\",\n      text1: message,\n    });\n  },\n  info: (message: string) => {\n    Toast.show({\n      type: \"info\",\n      text1: message,\n    });\n  },\n};\n"
+    }
+  ],
+  "dependencies": [
+    "react-native-toast-message"
+  ]
+}

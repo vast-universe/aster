@@ -1,0 +1,14 @@
+{
+  "name": "checkbox",
+  "type": "registry:ui",
+  "description": "复选框组件",
+  "files": [
+    {
+      "path": "ui/checkbox.tsx",
+      "type": "registry:ui",
+      "content": "import { Pressable, View, StyleSheet, type ViewStyle } from \"react-native\";\n\nexport interface CheckboxProps {\n  checked?: boolean;\n  onCheckedChange?: (checked: boolean) => void;\n  disabled?: boolean;\n  style?: ViewStyle;\n}\n\nexport function Checkbox({\n  checked = false,\n  onCheckedChange,\n  disabled = false,\n  style,\n}: CheckboxProps) {\n  return (\n    <Pressable\n      onPress={() => onCheckedChange?.(!checked)}\n      disabled={disabled}\n      style={[\n        styles.checkbox,\n        checked && styles.checked,\n        disabled && styles.disabled,\n        style,\n      ]}\n      accessible\n      accessibilityRole=\"checkbox\"\n      accessibilityState={{ checked, disabled }}\n    >\n      {checked && <View style={styles.indicator} />}\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  checkbox: {\n    height: 20,\n    width: 20,\n    borderRadius: 4,\n    borderWidth: 2,\n    borderColor: \"#d1d5db\",\n    alignItems: \"center\",\n    justifyContent: \"center\",\n    backgroundColor: \"transparent\",\n  },\n  checked: {\n    backgroundColor: \"#3b82f6\",\n    borderColor: \"#3b82f6\",\n  },\n  disabled: {\n    opacity: 0.5,\n  },\n  indicator: {\n    height: 10,\n    width: 10,\n    backgroundColor: \"#fff\",\n    borderRadius: 2,\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}

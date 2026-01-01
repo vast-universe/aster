@@ -1,0 +1,43 @@
+{
+  "name": "lint",
+  "type": "registry:config",
+  "description": "Husky + Prettier + lint-staged 代码规范",
+  "files": [
+    {
+      "path": "configs/lint/.prettierrc",
+      "type": "registry:config",
+      "target": ".prettierrc",
+      "content": "{\n  \"semi\": true,\n  \"singleQuote\": false,\n  \"tabWidth\": 2,\n  \"trailingComma\": \"es5\"\n}\n"
+    },
+    {
+      "path": "configs/lint/.prettierignore",
+      "type": "registry:config",
+      "target": ".prettierignore",
+      "content": "node_modules\ndist\nbuild\n.next\n.nuxt\n.expo\n*.lock\n"
+    },
+    {
+      "path": "configs/lint/.lintstagedrc.js",
+      "type": "registry:config",
+      "target": ".lintstagedrc.js",
+      "content": "module.exports = {\n  \"*.{js,jsx,ts,tsx,vue}\": [\"prettier --write\"],\n  \"*.{json,md}\": [\"prettier --write\"],\n};\n"
+    }
+  ],
+  "devDependencies": [
+    "prettier",
+    "husky",
+    "lint-staged"
+  ],
+  "transforms": [
+    {
+      "file": "package.json",
+      "merge": {
+        "scripts": {
+          "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\""
+        }
+      }
+    }
+  ],
+  "postInstall": [
+    "npx husky init"
+  ]
+}

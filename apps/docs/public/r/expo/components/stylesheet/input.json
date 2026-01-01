@@ -1,0 +1,14 @@
+{
+  "name": "input",
+  "type": "registry:ui",
+  "description": "文本输入框组件",
+  "files": [
+    {
+      "path": "ui/input.tsx",
+      "type": "registry:ui",
+      "content": "import {\n  TextInput,\n  StyleSheet,\n  type TextInputProps,\n  type ViewStyle,\n} from \"react-native\";\n\nexport interface InputProps extends TextInputProps {\n  error?: boolean;\n  style?: ViewStyle;\n}\n\nexport function Input({ error, style, ...props }: InputProps) {\n  return (\n    <TextInput\n      style={[styles.input, error && styles.error, style]}\n      placeholderTextColor=\"#9ca3af\"\n      accessible\n      accessibilityRole=\"text\"\n      {...props}\n    />\n  );\n}\n\nconst styles = StyleSheet.create({\n  input: {\n    height: 44,\n    paddingHorizontal: 12,\n    borderRadius: 8,\n    borderWidth: 1,\n    borderColor: \"#d1d5db\",\n    backgroundColor: \"#fff\",\n    fontSize: 16,\n    color: \"#111827\",\n  },\n  error: {\n    borderColor: \"#ef4444\",\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}

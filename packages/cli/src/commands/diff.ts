@@ -1,149 +1,161 @@
 /**
- * Diff 命令 - 检查组件更新
+ * diff 命令 - 检查资源更新
  */
+import ora from "ora";
+import { logger, readConfig, getInstalledResources } from "../lib";
+import { fetchResource, fetchResourceVersions } from "../services";
+import type { ResourceRef, Framework, Style } from "../types";
 
-import chalk from "chalk";
-import { getConfig, hasConfig } from "../utils/config";
-import { fetchComponent, fetchRegistry } from "../utils/registry";
-import {
-  readFile,
-  getInstalledComponents,
-  findComponentFile,
-} from "../core/fs";
+export async function diff(item?: string): Promise<void> {
+  const spinner = ora();
+  const cwd = process.cwd();
 
-export async function diff(componentName?: string): Promise<void> {
-  try {
-    if (!hasConfig()) {
-      console.log(chalk.red("\n找不到 aster.json，请先运行 npx aster init\n"));
-      process.exit(1);
-    }
-
-    const config = await getConfig();
-    const { style } = config;
-
-    console.log(chalk.dim(`\n样式方案: ${style}\n`));
-
-    if (componentName) {
-      // 对比单个组件
-      await diffSingleComponent(componentName, config);
-    } else {
-      // 检查所有组件更新
-      await diffAllComponents(config);
-    }
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(chalk.red(`\n错误: ${error.message}\n`));
-    }
-    process.exit(1);
+  const config = await readConfig(cwd);
+  if (!config) {
+    logger.error("找不到 aster.json，请先运行 npx aster init");
+    return;
   }
-}
 
-async function diffAllComponents(
-  config: Awaited<ReturnType<typeof getConfig>>
-) {
-  const registry = await fetchRegistry(config.style);
-  const installed = getInstalledComponents(config.paths.components);
-  const componentsWithUpdates: string[] = [];
+  const framework = config.framework as Framework;
+  const style = config.style as Style;
 
-  console.log(chalk.dim("检查组件更新...\n"));
+  // 获取已安装的资源
+  const installed = await getInstalledResources(cwd);
 
-  for (const item of registry) {
-    if (item.type !== "registry:ui") continue;
-    if (!installed.includes(item.name)) continue;
+  if (installed.length === 0) {
+    logger.warn("没有已安装的资源");
+    return;
+  }
 
-    const localPath = findComponentFile(config.paths.components, item.name);
-    if (!localPath) continue;
+  // 如果指定了资源，只检查该资源
+  if (item) {
+    await diffSingleResource(item, installed, framework, style, spinner);
+    return;
+  }
 
+  // 检查所有资源
+  logger.header("🔍", "检查资源更新");
+
+  spinner.start("检查更新...");
+
+  const updates: Array<{ name: string; type: string; current: string; latest: string }> = [];
+
+  for (const res of installed) {
     try {
-      const remoteItem = await fetchComponent(item.name, config.style);
-      const localContent = await readFile(localPath);
-      const remoteContent = remoteItem.files[0]?.content || "";
+      const ref: ResourceRef = {
+        namespace: res.namespace,
+        type: res.type as any,
+        name: res.name,
+      };
 
-      if (normalizeContent(localContent) !== normalizeContent(remoteContent)) {
-        componentsWithUpdates.push(item.name);
+      const { versions } = await fetchResourceVersions(ref);
+      const latestVersion = versions[0]?.version;
+
+      if (latestVersion && latestVersion !== res.version) {
+        updates.push({
+          name: res.name,
+          type: res.type,
+          current: res.version,
+          latest: latestVersion,
+        });
       }
     } catch {
-      // 忽略获取失败的组件
+      // 忽略获取失败的资源
     }
   }
 
-  if (componentsWithUpdates.length === 0) {
-    console.log(chalk.green("✔ 所有组件都是最新的\n"));
+  spinner.stop();
+
+  if (updates.length === 0) {
+    logger.success("所有资源都是最新的");
     return;
   }
 
-  console.log(chalk.yellow("以下组件有更新:\n"));
-  for (const name of componentsWithUpdates) {
-    console.log(`  - ${chalk.cyan(name)}`);
+  logger.warn(`${updates.length} 个资源有更新:`);
+  logger.newline();
+
+  for (const u of updates) {
+    const prefix = u.type === "ui" ? "" : `${u.type}:`;
+    logger.log(`  ${prefix}${u.name}: ${u.current} → ${u.latest}`);
   }
-  console.log(
-    chalk.dim(`\n运行 `) +
-      chalk.cyan(`npx aster diff <组件名>`) +
-      chalk.dim(` 查看具体差异\n`)
-  );
+
+  logger.newline();
+  logger.dim("运行 npx aster update 更新资源");
+  logger.newline();
 }
 
-async function diffSingleComponent(
-  name: string,
-  config: Awaited<ReturnType<typeof getConfig>>
-) {
-  const localPath = findComponentFile(config.paths.components, name);
+async function diffSingleResource(
+  item: string,
+  installed: Awaited<ReturnType<typeof getInstalledResources>>,
+  framework: Framework,
+  style: Style,
+  spinner: ReturnType<typeof ora>
+): Promise<void> {
+  // 解析资源名称
+  let type = "ui";
+  let name = item;
 
-  if (!localPath) {
-    console.log(chalk.yellow(`组件 ${name} 不存在于本地\n`));
+  if (item.includes(":")) {
+    const [t, n] = item.split(":");
+    type = t;
+    name = n;
+  }
+
+  // 查找已安装的资源
+  const res = installed.find((i) => i.type === type && i.name === name);
+  if (!res) {
+    logger.warn(`资源 ${item} 未安装`);
     return;
   }
 
-  const remoteItem = await fetchComponent(name, config.style);
-  const localContent = await readFile(localPath);
-  const remoteContent = remoteItem.files[0]?.content || "";
+  logger.header("🔍", `检查 ${item} 更新`);
 
-  if (normalizeContent(localContent) === normalizeContent(remoteContent)) {
-    console.log(chalk.green(`✔ ${name} 已是最新版本\n`));
-    return;
-  }
+  spinner.start("获取远程版本...");
 
-  console.log(chalk.yellow(`${name} 有差异:\n`));
-  console.log(chalk.dim("─".repeat(50)));
+  try {
+    const ref: ResourceRef = {
+      namespace: res.namespace,
+      type: res.type as any,
+      name: res.name,
+    };
 
-  // 简单的行对比
-  const localLines = localContent.split("\n");
-  const remoteLines = remoteContent.split("\n");
+    const { versions } = await fetchResourceVersions(ref);
+    const latestVersion = versions[0]?.version;
 
-  const maxLines = Math.max(localLines.length, remoteLines.length);
-  let diffCount = 0;
+    spinner.stop();
 
-  for (let i = 0; i < maxLines; i++) {
-    const local = localLines[i] || "";
-    const remote = remoteLines[i] || "";
+    if (!latestVersion || latestVersion === res.version) {
+      logger.success(`${item} 已是最新版本 (${res.version})`);
+      return;
+    }
 
-    if (local !== remote) {
-      diffCount++;
-      if (diffCount <= 20) {
-        // 只显示前 20 处差异
-        console.log(chalk.dim(`行 ${i + 1}:`));
-        if (local) console.log(chalk.red(`- ${local}`));
-        if (remote) console.log(chalk.green(`+ ${remote}`));
-        console.log();
+    logger.warn(`${item} 有更新: ${res.version} → ${latestVersion}`);
+    logger.newline();
+
+    // 获取远程内容进行对比
+    spinner.start("获取远程内容...");
+
+    const remoteContent = await fetchResource(ref, framework, style);
+
+    spinner.stop();
+
+    logger.dim("版本变更:");
+    logger.dim(`  当前: ${res.version}`);
+    logger.dim(`  最新: ${latestVersion}`);
+    logger.newline();
+
+    if (remoteContent.files?.length) {
+      logger.dim("文件:");
+      for (const file of remoteContent.files) {
+        logger.dim(`  ${file.path}`);
       }
     }
+
+    logger.newline();
+    logger.dim(`运行 npx aster update ${item} 更新`);
+    logger.newline();
+  } catch (error) {
+    spinner.fail("获取远程版本失败");
+    logger.error((error as Error).message);
   }
-
-  if (diffCount > 20) {
-    console.log(chalk.dim(`... 还有 ${diffCount - 20} 处差异\n`));
-  }
-
-  console.log(chalk.dim("─".repeat(50)));
-  console.log(
-    chalk.dim("\n运行 ") +
-      chalk.cyan(`npx aster add ${name} --force`) +
-      chalk.dim(` 更新组件\n`)
-  );
-}
-
-function normalizeContent(content: string): string {
-  return content
-    .replace(/\r\n/g, "\n")
-    .replace(/\s+$/gm, "")
-    .trim();
 }

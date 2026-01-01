@@ -1,0 +1,16 @@
+{
+  "name": "axios",
+  "type": "registry:config",
+  "description": "Axios HTTP 请求封装",
+  "files": [
+    {
+      "path": "configs/axios/lib/request.ts",
+      "type": "registry:lib",
+      "target": "lib/request.ts",
+      "content": "import axios, { type AxiosInstance, type AxiosRequestConfig } from \"axios\";\n\nconst instance: AxiosInstance = axios.create({\n  baseURL: process.env.NEXT_PUBLIC_API_URL || \"/api\",\n  timeout: 10000,\n  headers: {\n    \"Content-Type\": \"application/json\",\n  },\n});\n\n// 请求拦截器\ninstance.interceptors.request.use(\n  (config) => {\n    // 添加 token\n    const token = typeof window !== \"undefined\" ? localStorage.getItem(\"token\") : null;\n    if (token) {\n      config.headers.Authorization = `Bearer ${token}`;\n    }\n    return config;\n  },\n  (error) => Promise.reject(error)\n);\n\n// 响应拦截器\ninstance.interceptors.response.use(\n  (response) => response.data,\n  (error) => {\n    const message = error.response?.data?.message || error.message;\n    console.error(\"Request error:\", message);\n    return Promise.reject(error);\n  }\n);\n\nexport const request = {\n  get: <T>(url: string, config?: AxiosRequestConfig) =>\n    instance.get<T, T>(url, config),\n  post: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>\n    instance.post<T, T>(url, data, config),\n  put: <T>(url: string, data?: unknown, config?: AxiosRequestConfig) =>\n    instance.put<T, T>(url, data, config),\n  delete: <T>(url: string, config?: AxiosRequestConfig) =>\n    instance.delete<T, T>(url, config),\n};\n\nexport default instance;\n"
+    }
+  ],
+  "dependencies": [
+    "axios"
+  ]
+}

@@ -1,94 +1,97 @@
 /**
- * Update 命令 - 更新已安装的组件
+ * update 命令 - 更新已安装的资源
  */
-
-import path from "path";
-import chalk from "chalk";
 import ora from "ora";
 import prompts from "prompts";
-import { createHash } from "crypto";
-import { getConfig, getTargetDir } from "../utils/config";
-import { fetchComponentFromSource } from "../utils/fetcher";
-import {
-  writeFile,
-  readFile,
-  getInstalledComponents,
-  findComponentFile,
-} from "../core/fs";
+import { logger, readConfig, markInstalled, getInstalledResources } from "../lib";
+import { fetchResource, fetchResourceVersions } from "../services";
+import { InstallTransaction } from "../core";
+import type { ResourceRef, Framework, Style } from "../types";
 
-interface UpdateInfo {
-  name: string;
-  hasUpdate: boolean;
-  localHash?: string;
-  remoteHash?: string;
+interface UpdateOptions {
+  all?: boolean;
+  force?: boolean;
 }
 
-export async function update(
-  components: string[],
-  options: { all?: boolean; force?: boolean }
-): Promise<void> {
+interface UpdateInfo {
+  type: string;
+  name: string;
+  namespace: string;
+  currentVersion: string;
+  latestVersion: string;
+  hasUpdate: boolean;
+}
+
+export async function update(items: string[], options: UpdateOptions = {}): Promise<void> {
   const spinner = ora();
+  const cwd = process.cwd();
 
   try {
-    const config = await getConfig();
-    const { style } = config;
-    const componentsDir = config.paths.components;
-
-    // 获取已安装的组件
-    const installed = getInstalledComponents(componentsDir);
-
-    if (installed.length === 0) {
-      console.log(chalk.yellow("\n没有已安装的组件\n"));
+    // 获取配置
+    const config = await readConfig(cwd);
+    if (!config) {
+      logger.error("找不到 aster.json，请先运行 npx aster init");
       return;
     }
 
-    // 确定要检查的组件
-    let toCheck: string[];
-    if (options.all || components.length === 0) {
-      toCheck = installed;
-    } else {
-      toCheck = components.filter((c) => installed.includes(c));
-      const notInstalled = components.filter((c) => !installed.includes(c));
-      if (notInstalled.length > 0) {
-        console.log(
-          chalk.yellow(`\n⚠ 以下组件未安装: ${notInstalled.join(", ")}\n`)
-        );
+    const framework = config.framework as Framework;
+    const style = config.style as Style;
+
+    // 获取已安装的资源
+    const installed = await getInstalledResources(cwd);
+
+    if (installed.length === 0) {
+      logger.warn("没有已安装的资源");
+      return;
+    }
+
+    // 确定要检查的资源
+    let toCheck = installed;
+    if (!options.all && items.length > 0) {
+      toCheck = installed.filter((i) => {
+        const key = i.type === "ui" ? i.name : `${i.type}:${i.name}`;
+        return items.includes(key) || items.includes(i.name);
+      });
+
+      if (toCheck.length === 0) {
+        logger.warn("指定的资源未安装");
+        return;
       }
     }
 
-    if (toCheck.length === 0) {
-      console.log(chalk.yellow("\n没有需要检查的组件\n"));
-      return;
-    }
-
-    console.log(chalk.dim(`\n检查 ${toCheck.length} 个组件的更新...\n`));
+    logger.dim(`\n检查 ${toCheck.length} 个资源的更新...\n`);
 
     // 检查更新
     spinner.start("检查更新...");
     const updates: UpdateInfo[] = [];
 
-    for (const name of toCheck) {
+    for (const item of toCheck) {
       try {
-        const localPath = findComponentFile(componentsDir, name);
-        if (!localPath) continue;
+        const ref: ResourceRef = {
+          namespace: item.namespace,
+          type: item.type as any,
+          name: item.name,
+        };
 
-        const localContent = await readFile(localPath);
-        const localHash = hashContent(localContent);
-
-        const remoteItem = await fetchComponentFromSource(name, style, config);
-        const remoteContent = remoteItem.files[0]?.content || "";
-        const remoteHash = hashContent(remoteContent);
+        const { versions } = await fetchResourceVersions(ref);
+        const latestVersion = versions[0]?.version || item.version;
 
         updates.push({
-          name,
-          hasUpdate: localHash !== remoteHash,
-          localHash,
-          remoteHash,
+          type: item.type,
+          name: item.name,
+          namespace: item.namespace,
+          currentVersion: item.version,
+          latestVersion,
+          hasUpdate: latestVersion !== item.version,
         });
       } catch {
-        // 获取远程失败，跳过
+        // 获取失败，跳过
         updates.push({
-          name,
+          type: item.type,
+          name: item.name,
+          namespace: item.namespace,
+          currentVersion: item.version,
+          latestVersion: item.version,
           hasUpdate: false,
         });
       }
@@ -101,80 +104,90 @@ export async function update(
     const upToDate = updates.filter((u) => !u.hasUpdate);
 
     if (withUpdates.length === 0) {
-      console.log(chalk.green("✔ 所有组件都是最新的\n"));
+      logger.success("所有资源都是最新的");
       return;
     }
 
-    console.log(chalk.cyan("有更新的组件:"));
+    logger.header("📦", "有更新的资源:");
     for (const u of withUpdates) {
-      console.log(`  ${chalk.yellow("●")} ${u.name}`);
+      const key = u.type === "ui" ? u.name : `${u.type}:${u.name}`;
+      logger.log(`  ● ${key} ${u.currentVersion} → ${u.latestVersion}`);
     }
 
     if (upToDate.length > 0) {
-      console.log(
-        chalk.dim(`\n已是最新: ${upToDate.map((u) => u.name).join(", ")}`)
-      );
+      logger.dim(`\n已是最新: ${upToDate.length} 个`);
     }
 
     // 确认更新
-    let toUpdate: string[];
+    let toUpdate: UpdateInfo[];
     if (!options.force) {
       const answer = await prompts({
         type: "multiselect",
         name: "selected",
-        message: "选择要更新的组件:",
-        choices: withUpdates.map((u) => ({
-          title: u.name,
-          value: u.name,
-          selected: true,
-        })),
+        message: "选择要更新的资源:",
+        choices: withUpdates.map((u) => {
+          const key = u.type === "ui" ? u.name : `${u.type}:${u.name}`;
+          return {
+            title: `${key} (${u.currentVersion} → ${u.latestVersion})`,
+            value: u,
+            selected: true,
+          };
+        }),
       });
 
       if (!answer.selected || answer.selected.length === 0) {
-        console.log(chalk.yellow("\n已取消\n"));
+        logger.dim("\n已取消");
         return;
       }
 
       toUpdate = answer.selected;
     } else {
-      toUpdate = withUpdates.map((u) => u.name);
+      toUpdate = withUpdates;
     }
 
-    console.log();
+    logger.newline();
 
-    // 执行更新
-    for (const name of toUpdate) {
-      spinner.start(`更新 ${name}...`);
+    // 执行更新（使用事务）
+    const transaction = new InstallTransaction(cwd);
 
-      try {
-        const remoteItem = await fetchComponentFromSource(name, style, config);
+    try {
+      await transaction.begin();
 
-        for (const file of remoteItem.files) {
-          const targetDir = getTargetDir(file.type, config);
-          const targetPath = path.join(targetDir, path.basename(file.path));
-          await writeFile(targetPath, file.content);
+      for (const u of toUpdate) {
+        const key = u.type === "ui" ? u.name : `${u.type}:${u.name}`;
+        spinner.start(`更新 ${key}...`);
+
+        const ref: ResourceRef = {
+          namespace: u.namespace,
+          type: u.type as any,
+          name: u.name,
+          version: u.latestVersion,
+        };
+
+        const content = await fetchResource(ref, framework, style);
+
+        // 写入文件
+        for (const file of content.files || []) {
+          await transaction.writeFile(file.path, file.content);
         }
 
-        spinner.succeed(`已更新 ${name}`);
-      } catch {
-        spinner.fail(`更新 ${name} 失败`);
-      }
-    }
+        // 更新记录
+        await markInstalled(u.type as any, u.name, u.latestVersion, u.namespace, undefined, cwd);
 
-    console.log(chalk.green("\n完成! 🎉\n"));
+        spinner.succeed(`已更新 ${key} → ${u.latestVersion}`);
+      }
+
+      await transaction.commit();
+      logger.newline();
+      logger.success("完成");
+    } catch (error) {
+      spinner.fail("更新失败");
+      logger.error((error as Error).message);
+      await transaction.rollback();
+    }
   } catch (error) {
     spinner.fail();
-    if (error instanceof Error) {
-      console.error(chalk.red(`\n错误: ${error.message}\n`));
-    }
+    logger.error((error as Error).message);
     process.exit(1);
   }
-}
-
-/**
- * 计算内容哈希 (忽略空白差异)
- */
-function hashContent(content: string): string {
-  const normalized = content.replace(/\s+/g, " ").trim();
-  return createHash("md5").update(normalized).digest("hex");
 }

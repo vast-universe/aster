@@ -1,0 +1,16 @@
+{
+  "name": "avatar",
+  "type": "registry:ui",
+  "description": "头像组件，支持图片和文字",
+  "files": [
+    {
+      "path": "ui/avatar.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Text, Image } from \"react-native\";\nimport { useState } from \"react\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface AvatarProps {\n  src?: string;\n  alt?: string;\n  fallback?: string;\n  size?: \"sm\" | \"default\" | \"lg\";\n  className?: string;\n}\n\nconst sizeClasses = {\n  sm: \"h-8 w-8\",\n  default: \"h-10 w-10\",\n  lg: \"h-14 w-14\",\n};\n\nconst textSizeClasses = {\n  sm: \"text-xs\",\n  default: \"text-sm\",\n  lg: \"text-lg\",\n};\n\nexport function Avatar({\n  src,\n  alt,\n  fallback,\n  size = \"default\",\n  className,\n}: AvatarProps) {\n  const [error, setError] = useState(false);\n\n  const showFallback = !src || error;\n\n  return (\n    <View\n      className={cn(\n        \"rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 items-center justify-center\",\n        sizeClasses[size],\n        className\n      )}\n      accessible\n      accessibilityRole=\"image\"\n      accessibilityLabel={alt || fallback}\n    >\n      {showFallback ? (\n        <Text\n          className={cn(\n            \"font-medium text-gray-600 dark:text-gray-300\",\n            textSizeClasses[size]\n          )}\n        >\n          {fallback?.charAt(0).toUpperCase() || \"?\"}\n        </Text>\n      ) : (\n        <Image\n          source={{ uri: src }}\n          className=\"h-full w-full\"\n          onError={() => setError(true)}\n        />\n      )}\n    </View>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

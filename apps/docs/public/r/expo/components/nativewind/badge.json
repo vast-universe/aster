@@ -1,0 +1,18 @@
+{
+  "name": "badge",
+  "type": "registry:ui",
+  "description": "徽章组件",
+  "files": [
+    {
+      "path": "ui/badge.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Text } from \"react-native\";\nimport { cva, type VariantProps } from \"class-variance-authority\";\nimport { cn } from \"@/lib/aster-utils\";\n\nconst badgeVariants = cva(\n  \"rounded-full px-2.5 py-0.5 items-center justify-center\",\n  {\n    variants: {\n      variant: {\n        default: \"bg-blue-500\",\n        secondary: \"bg-gray-500\",\n        destructive: \"bg-red-500\",\n        success: \"bg-green-500\",\n        outline: \"border border-gray-300 bg-transparent\",\n      },\n    },\n    defaultVariants: {\n      variant: \"default\",\n    },\n  }\n);\n\nconst badgeTextVariants = cva(\"text-xs font-medium\", {\n  variants: {\n    variant: {\n      default: \"text-white\",\n      secondary: \"text-white\",\n      destructive: \"text-white\",\n      success: \"text-white\",\n      outline: \"text-gray-900 dark:text-white\",\n    },\n  },\n  defaultVariants: {\n    variant: \"default\",\n  },\n});\n\nexport interface BadgeProps extends VariantProps<typeof badgeVariants> {\n  children: React.ReactNode;\n  className?: string;\n}\n\nexport function Badge({ children, variant, className }: BadgeProps) {\n  return (\n    <View className={cn(badgeVariants({ variant }), className)}>\n      <Text className={cn(badgeTextVariants({ variant }))}>{children}</Text>\n    </View>\n  );\n}\n"
+    }
+  ],
+  "dependencies": [
+    "class-variance-authority"
+  ],
+  "registryDependencies": [
+    "utils"
+  ]
+}

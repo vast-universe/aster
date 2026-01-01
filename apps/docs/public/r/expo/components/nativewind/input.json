@@ -1,0 +1,16 @@
+{
+  "name": "input",
+  "type": "registry:ui",
+  "description": "文本输入框组件",
+  "files": [
+    {
+      "path": "ui/input.tsx",
+      "type": "registry:ui",
+      "content": "import { TextInput, type TextInputProps } from \"react-native\";\nimport { cn } from \"@/lib/aster-utils\";\n\nexport interface InputProps extends TextInputProps {\n  error?: boolean;\n}\n\nexport function Input({ error, className, ...props }: InputProps) {\n  return (\n    <TextInput\n      className={cn(\n        \"h-11 px-3 rounded-lg border bg-white dark:bg-gray-900\",\n        \"text-base text-gray-900 dark:text-white\",\n        \"placeholder:text-gray-400\",\n        error ? \"border-red-500\" : \"border-gray-300 dark:border-gray-700\",\n        className\n      )}\n      accessible\n      accessibilityRole=\"text\"\n      {...props}\n    />\n  );\n}\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "utils"
+  ]
+}

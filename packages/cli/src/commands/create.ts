@@ -1,279 +1,424 @@
+/**
+ * create 命令 - 创建新项目
+ */
+import { execSync } from "child_process";
 import path from "path";
-import { existsSync } from "fs";
-import chalk from "chalk";
 import ora from "ora";
 import prompts from "prompts";
-import {
-  getFrameworkAdapter,
-  getFrameworkChoices,
-  type FrameworkConfig,
-  type FrameworkName,
-} from "../utils/frameworks";
-import {
-  getPreset,
-  getAllPresets,
-  saveUserPreset,
-} from "../utils/presets";
+import { logger, fs } from "../lib";
+
+const TEMPLATE_REPO = "nicepkg/aster-templates";
 
 interface CreateOptions {
-  yes?: boolean;
-  preset?: string;
-  template?: string;
   framework?: string;
+  starter?: string;
+  features?: string[];
+  yes?: boolean;
 }
 
-export async function create(
-  projectName: string | undefined,
-  options: CreateOptions
-): Promise<void> {
-  console.log(chalk.cyan.bold("\n🚀 Aster - 创建项目\n"));
-
-  try {
-    let frameworkName: FrameworkName;
-    let config: FrameworkConfig;
-
-    // 使用预设
-    if (options.preset) {
-      const preset = await getPreset(options.preset);
-      if (!preset) {
-        console.error(chalk.red(`预设 "${options.preset}" 不存在`));
-        console.log(chalk.dim("\n可用预设:"));
-        const presets = await getAllPresets();
-        presets.forEach((p) => console.log(chalk.dim(`  - ${p.name}: ${p.description}`)));
-        process.exit(1);
-      }
-
-      frameworkName = preset.framework;
-      config = {
-        projectName: projectName || "my-app",
-        style: preset.style,
-        stateLib: preset.stateLib,
-        extraLibs: preset.extraLibs,
-      };
-
-      console.log(chalk.dim(`使用预设: ${preset.name}`));
-    } else {
-      // 1. 选择框架或预设
-      const { usePreset } = options.yes
-        ? { usePreset: false }
-        : await prompts({
-            type: "confirm",
-            name: "usePreset",
-            message: "是否使用预设配置？",
-            initial: false,
-          });
-
-      if (usePreset) {
-        // 选择预设
-        const presets = await getAllPresets();
-        const { selectedPreset } = await prompts({
-          type: "select",
-          name: "selectedPreset",
-          message: "选择预设:",
-          choices: presets.map((p) => ({
-            title: `${p.name} - ${p.description}`,
-            value: p.name,
-            description: `${p.framework} | ${p.style}`,
-          })),
-        });
-
-        const preset = await getPreset(selectedPreset);
-        if (preset) {
-          frameworkName = preset.framework;
-          config = {
-            projectName: projectName || "my-app",
-            style: preset.style,
-            stateLib: preset.stateLib,
-            extraLibs: preset.extraLibs,
-          };
-          console.log(chalk.dim(`\n使用预设: ${preset.name}\n`));
-        } else {
-          throw new Error("预设加载失败");
-        }
-      } else {
-        // 手动配置
-        frameworkName = await selectFramework(options);
-        const adapter = getFrameworkAdapter(frameworkName);
-
-        console.log(chalk.dim(`\n框架: ${adapter.displayName}\n`));
-
-        // 获取项目配置
-        config = await getProjectConfig(projectName, adapter, options);
-      }
-    }
-
-    const adapter = getFrameworkAdapter(frameworkName);
-    const targetDir = path.resolve(process.cwd(), config.projectName);
-
-    // 检查目录是否存在
-    if (existsSync(targetDir)) {
-      const { overwrite } = await prompts({
-        type: "confirm",
-        name: "overwrite",
-        message: `目录 ${config.projectName} 已存在，是否覆盖？`,
-        initial: false,
-      });
-      if (!overwrite) {
-        console.log(chalk.yellow("已取消"));
-        return;
-      }
-    }
-
-    const spinner = ora();
-
-    // 3. 创建项目
-    console.log(chalk.cyan(`\n正在创建 ${adapter.displayName} 项目...\n`));
-    await adapter.create(config);
-
-    // 4. 配置样式
-    spinner.start(`配置 ${config.style} 样式...`);
-    await adapter.setupStyle(targetDir, config.style);
-    spinner.succeed("样式配置完成");
-
-    // 5. 配置代码规范
-    if (config.extraLibs.includes("lint")) {
-      spinner.start("配置代码规范...");
-      await adapter.setupLint(targetDir);
-      spinner.succeed("代码规范配置完成");
-    }
-
-    // 6. 生成 Aster 配置
-    spinner.start("生成 Aster 配置...");
-    await adapter.generateAsterConfig(targetDir, config);
-    spinner.succeed("Aster 配置完成");
-
-    // 7. 询问是否保存为预设
-    if (!options.preset && !options.yes) {
-      const { savePreset } = await prompts({
-        type: "confirm",
-        name: "savePreset",
-        message: "是否保存当前配置为预设？",
-        initial: false,
-      });
-
-      if (savePreset) {
-        const { presetName, presetDesc } = await prompts([
-          {
-            type: "text",
-            name: "presetName",
-            message: "预设名称:",
-            initial: `${frameworkName}-custom`,
-          },
-          {
-            type: "text",
-            name: "presetDesc",
-            message: "预设描述:",
-            initial: "自定义预设",
-          },
-        ]);
-
-        if (presetName) {
-          await saveUserPreset({
-            name: presetName,
-            description: presetDesc || "自定义预设",
-            framework: frameworkName,
-            style: config.style,
-            stateLib: config.stateLib,
-            extraLibs: config.extraLibs,
-          });
-          console.log(chalk.green(`\n预设 "${presetName}" 已保存`));
-        }
-      }
-    }
-
-    // 8. 输出结果
-    console.log(chalk.green.bold("\n✅ 项目创建成功!\n"));
-    console.log(chalk.white(`  cd ${config.projectName}`));
-    console.log(chalk.white("  npm run dev\n"));
-
-    // 提示可用命令
-    console.log(chalk.cyan("接下来可以:"));
-    console.log(chalk.white("  npx aster add button    # 添加组件"));
-    console.log(chalk.white("  npx aster list          # 查看所有组件\n"));
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(chalk.red(`\n错误: ${error.message}\n`));
-    }
-    process.exit(1);
-  }
+interface FrameworkConfig {
+  name: string;
+  description: string;
+  path: string;
+  status: string;
+  baseCommand: string;
 }
 
-/**
- * 选择框架
- */
-async function selectFramework(options: CreateOptions): Promise<FrameworkName> {
-  // 命令行指定
-  if (options.framework) {
-    return options.framework as FrameworkName;
-  }
-
-  // 默认使用 Expo
-  if (options.yes) {
-    return "expo";
-  }
-
-  const { framework } = await prompts({
-    type: "select",
-    name: "framework",
-    message: "选择框架:",
-    choices: getFrameworkChoices(),
-    initial: 0,
-  });
-
-  return framework;
+interface StarterConfig {
+  name: string;
+  description: string;
+  path: string;
+  features: string[];
 }
 
-/**
- * 获取项目配置
- */
-async function getProjectConfig(
-  initialName: string | undefined,
-  adapter: ReturnType<typeof getFrameworkAdapter>,
-  options: CreateOptions
-): Promise<FrameworkConfig> {
-  // 使用默认配置
-  if (options.yes) {
-    return {
-      projectName: initialName || "my-app",
-      style: adapter.styles[0].value,
-      stateLib: "none",
-      extraLibs: ["lint"],
-    };
-  }
+interface FeatureConfig {
+  name: string;
+  description: string;
+  path: string;
+  dependencies?: string[];
+  devDependencies?: string[];
+  expoDependencies?: string[];
+  npmDependencies?: string[];
+  overrides?: Record<string, string>;
+}
 
-  const answers = await prompts([
-    {
-      type: initialName ? null : "text",
+interface TemplateConfig {
+  features: Record<string, FeatureConfig>;
+  starters: Record<string, StarterConfig>;
+  presets: Record<string, string[]>;
+}
+
+export async function create(projectName: string | undefined, options: CreateOptions = {}): Promise<void> {
+  const spinner = ora();
+
+  logger.header("🚀", "Aster Create - 创建新项目");
+
+  // 1. 获取项目名称
+  if (!projectName) {
+    const answer = await prompts({
+      type: "text",
       name: "projectName",
       message: "项目名称:",
       initial: "my-app",
-    },
-    {
-      type: "select",
-      name: "style",
-      message: "样式方案:",
-      choices: adapter.styles,
-      initial: 0,
-    },
-    {
-      type: "select",
-      name: "stateLib",
-      message: "状态管理:",
-      choices: adapter.stateLibs,
-      initial: 0,
-    },
-    {
-      type: "multiselect",
-      name: "extraLibs",
-      message: "选择其他库 (空格选择):",
-      choices: adapter.extraLibs,
-    },
-  ]);
+    });
+    projectName = answer.projectName;
+  }
 
-  return {
-    projectName: initialName || answers.projectName,
-    style: answers.style,
-    stateLib: answers.stateLib,
-    extraLibs: answers.extraLibs || [],
-  };
+  if (!projectName) {
+    logger.warn("已取消");
+    return;
+  }
+
+  const targetDir = path.resolve(process.cwd(), projectName);
+
+  // 检查目录是否存在
+  if (await fs.exists(targetDir)) {
+    const { overwrite } = await prompts({
+      type: "confirm",
+      name: "overwrite",
+      message: `目录 ${projectName} 已存在，是否覆盖？`,
+      initial: false,
+    });
+
+    if (!overwrite) {
+      logger.warn("已取消");
+      return;
+    }
+
+    await fs.remove(targetDir);
+  }
+
+  // 2. 选择框架
+  let framework = options.framework || "expo";
+
+  if (!options.yes && !options.framework) {
+    const answer = await prompts({
+      type: "select",
+      name: "framework",
+      message: "选择框架:",
+      choices: [
+        { title: "Expo (React Native)", value: "expo" },
+        { title: "Next.js (即将支持)", value: "nextjs", disabled: true },
+        { title: "Nuxt (即将支持)", value: "nuxt", disabled: true },
+      ],
+      initial: 0,
+    });
+
+    if (!answer.framework) {
+      logger.warn("已取消");
+      return;
+    }
+
+    framework = answer.framework;
+  }
+
+  // 3. 选择创建方式
+  let useStarter = true;
+  let starterName = options.starter || "standard";
+
+  if (!options.yes && !options.starter) {
+    const modeAnswer = await prompts({
+      type: "select",
+      name: "mode",
+      message: "创建方式:",
+      choices: [
+        { title: "🎯 使用完整模板 (推荐)", value: "starter" },
+        { title: "🔧 自定义组合功能", value: "custom" },
+      ],
+      initial: 0,
+    });
+
+    if (!modeAnswer.mode) {
+      logger.warn("已取消");
+      return;
+    }
+
+    useStarter = modeAnswer.mode === "starter";
+
+    if (useStarter) {
+      const starterAnswer = await prompts({
+        type: "select",
+        name: "starter",
+        message: "选择模板:",
+        choices: [
+          { title: "minimal   - 最小启动 (NativeWind)", value: "minimal" },
+          { title: "standard  - 标准企业 (推荐)", value: "standard" },
+          { title: "full      - 全功能 + 示例", value: "full", disabled: true },
+          { title: "ecommerce - 电商 App", value: "ecommerce", disabled: true },
+        ],
+        initial: 1,
+      });
+
+      if (!starterAnswer.starter) {
+        logger.warn("已取消");
+        return;
+      }
+
+      starterName = starterAnswer.starter;
+    }
+  }
+
+  logger.newline();
+
+  // 4. 创建项目
+  if (framework === "expo") {
+    await createExpoProject(projectName, targetDir, starterName, useStarter, spinner);
+  } else {
+    logger.error(`框架 ${framework} 暂不支持`);
+    return;
+  }
+
+  // 5. 输出结果
+  logger.newline();
+  logger.success("项目创建成功！");
+  logger.newline();
+  logger.log(`  cd ${projectName}`);
+  logger.log("  npm start");
+  logger.newline();
+  logger.dim("提示: 运行 npx aster add button 添加组件");
+  logger.newline();
+}
+
+async function createExpoProject(
+  projectName: string,
+  targetDir: string,
+  starterName: string,
+  useStarter: boolean,
+  spinner: ora.Ora
+): Promise<void> {
+  // 1. 创建 Expo 项目
+  spinner.start("创建 Expo 项目...");
+
+  try {
+    execSync(`npx create-expo-app@latest ${projectName}`, {
+      stdio: "pipe",
+      cwd: path.dirname(targetDir),
+    });
+    spinner.succeed("Expo 项目创建完成");
+  } catch (error) {
+    spinner.fail("Expo 项目创建失败");
+    throw error;
+  }
+
+  // 2. 重置项目
+  spinner.start("重置项目...");
+  try {
+    execSync("echo Y | npm run reset-project", {
+      cwd: targetDir,
+      stdio: "pipe",
+      shell: true,
+    });
+    spinner.succeed("项目重置完成");
+  } catch {
+    spinner.warn("reset-project 未执行");
+  }
+
+  // 3. 拉取模板文件
+  spinner.start(`拉取 ${starterName} 模板...`);
+
+  try {
+    // 使用 degit 拉取模板
+    const tempDir = path.join(targetDir, ".temp-template");
+    execSync(
+      `npx degit ${TEMPLATE_REPO}/expo/starters/${starterName} ${tempDir} --force`,
+      { stdio: "pipe" }
+    );
+
+    // 复制文件到项目
+    await copyTemplateFiles(tempDir, targetDir);
+    await fs.remove(tempDir);
+
+    spinner.succeed("模板文件复制完成");
+  } catch (error) {
+    spinner.fail("模板拉取失败，使用本地默认配置");
+    // 创建基础文件
+    await createDefaultFiles(targetDir);
+  }
+
+  // 4. 安装依赖
+  spinner.start("安装 NativeWind...");
+
+  try {
+    // 添加 overrides
+    const pkgPath = path.join(targetDir, "package.json");
+    const pkg = await fs.readJson<Record<string, unknown>>(pkgPath);
+    if (pkg) {
+      pkg.overrides = { lightningcss: "1.30.1" };
+      await fs.writeJson(pkgPath, pkg);
+    }
+
+    // 安装 NativeWind
+    execSync(
+      "npx expo install nativewind@preview react-native-css react-native-reanimated react-native-safe-area-context",
+      { cwd: targetDir, stdio: "pipe" }
+    );
+
+    execSync("npx expo install --dev tailwindcss @tailwindcss/postcss postcss", {
+      cwd: targetDir,
+      stdio: "pipe",
+    });
+
+    execSync("npm install clsx tailwind-merge class-variance-authority", {
+      cwd: targetDir,
+      stdio: "pipe",
+    });
+
+    spinner.succeed("NativeWind 安装完成");
+  } catch {
+    spinner.fail("NativeWind 安装失败，请手动安装");
+  }
+
+  // 5. 根据模板安装额外依赖
+  if (starterName === "standard" || starterName === "full") {
+    spinner.start("安装 Redux...");
+    try {
+      execSync(
+        "npm install @reduxjs/toolkit react-redux redux-persist @react-native-async-storage/async-storage",
+        { cwd: targetDir, stdio: "pipe" }
+      );
+      spinner.succeed("Redux 安装完成");
+    } catch {
+      spinner.fail("Redux 安装失败");
+    }
+
+    spinner.start("安装 Axios...");
+    try {
+      execSync("npm install axios", { cwd: targetDir, stdio: "pipe" });
+      spinner.succeed("Axios 安装完成");
+    } catch {
+      spinner.fail("Axios 安装失败");
+    }
+  }
+
+  // 6. 更新 tsconfig
+  spinner.start("配置 TypeScript...");
+  try {
+    const tsconfigPath = path.join(targetDir, "tsconfig.json");
+    const tsconfig = await fs.readJson<Record<string, unknown>>(tsconfigPath);
+    if (tsconfig) {
+      if (!Array.isArray(tsconfig.include)) {
+        tsconfig.include = [];
+      }
+      if (!(tsconfig.include as string[]).includes("nativewind-env.d.ts")) {
+        (tsconfig.include as string[]).push("nativewind-env.d.ts");
+      }
+      await fs.writeJson(tsconfigPath, tsconfig);
+    }
+    spinner.succeed("TypeScript 配置完成");
+  } catch {
+    spinner.warn("TypeScript 配置失败");
+  }
+}
+
+async function copyTemplateFiles(srcDir: string, destDir: string): Promise<void> {
+  const files = await fs.listDir(srcDir);
+
+  for (const file of files) {
+    const srcPath = path.join(srcDir, file);
+    const destPath = path.join(destDir, file);
+
+    const stat = await fs.stat(srcPath);
+    if (stat?.isDirectory()) {
+      await fs.ensureDir(destPath);
+      await copyTemplateFiles(srcPath, destPath);
+    } else {
+      await fs.copy(srcPath, destPath);
+    }
+  }
+}
+
+async function createDefaultFiles(targetDir: string): Promise<void> {
+  // global.css
+  await fs.writeText(
+    path.join(targetDir, "global.css"),
+    `@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+@import "nativewind/theme";
+`
+  );
+
+  // metro.config.js
+  await fs.writeText(
+    path.join(targetDir, "metro.config.js"),
+    `const { getDefaultConfig } = require("expo/metro-config");
+const { withNativeWind } = require("nativewind/metro");
+
+const config = getDefaultConfig(__dirname);
+
+module.exports = withNativeWind(config);
+`
+  );
+
+  // postcss.config.mjs
+  await fs.writeText(
+    path.join(targetDir, "postcss.config.mjs"),
+    `export default {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+`
+  );
+
+  // nativewind-env.d.ts
+  await fs.writeText(
+    path.join(targetDir, "nativewind-env.d.ts"),
+    `/// <reference types="nativewind/types" />
+`
+  );
+
+  // lib/utils.ts
+  await fs.ensureDir(path.join(targetDir, "lib"));
+  await fs.writeText(
+    path.join(targetDir, "lib/utils.ts"),
+    `import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
+`
+  );
+
+  // components/ui/index.ts
+  await fs.ensureDir(path.join(targetDir, "components/ui"));
+  await fs.writeText(
+    path.join(targetDir, "components/ui/index.ts"),
+    `// UI 组件导出
+// 使用 npx aster add button 添加组件
+`
+  );
+
+  // aster.json
+  await fs.writeJson(path.join(targetDir, "aster.json"), {
+    $schema: "https://aster.dev/schema/aster.json",
+    style: "nativewind",
+    framework: "expo",
+    aliases: {
+      components: "@/components",
+      hooks: "@/hooks",
+      lib: "@/lib",
+    },
+    installed: {
+      ui: {},
+      hook: {},
+      lib: {},
+      config: {},
+    },
+  });
+
+  // 更新 app/_layout.tsx
+  const layoutPath = path.join(targetDir, "app/_layout.tsx");
+  if (await fs.exists(layoutPath)) {
+    await fs.writeText(
+      layoutPath,
+      `import "../global.css";
+import { Stack } from "expo-router";
+
+export default function RootLayout() {
+  return <Stack />;
+}
+`
+    );
+  }
 }

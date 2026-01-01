@@ -1,0 +1,14 @@
+{
+  "name": "avatar",
+  "type": "registry:ui",
+  "description": "头像组件，支持图片和文字",
+  "files": [
+    {
+      "path": "ui/avatar.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Text, Image, StyleSheet, type ViewStyle } from \"react-native\";\nimport { useState } from \"react\";\n\nexport interface AvatarProps {\n  src?: string;\n  alt?: string;\n  fallback?: string;\n  size?: \"sm\" | \"default\" | \"lg\";\n  style?: ViewStyle;\n}\n\nexport function Avatar({\n  src,\n  alt,\n  fallback,\n  size = \"default\",\n  style,\n}: AvatarProps) {\n  const [error, setError] = useState(false);\n  const showFallback = !src || error;\n\n  return (\n    <View\n      style={[styles.container, styles[`size_${size}`], style]}\n      accessible\n      accessibilityRole=\"image\"\n      accessibilityLabel={alt || fallback}\n    >\n      {showFallback ? (\n        <Text style={[styles.fallback, styles[`fallbackSize_${size}`]]}>\n          {fallback?.charAt(0).toUpperCase() || \"?\"}\n        </Text>\n      ) : (\n        <Image\n          source={{ uri: src }}\n          style={styles.image}\n          onError={() => setError(true)}\n        />\n      )}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    borderRadius: 9999,\n    overflow: \"hidden\",\n    backgroundColor: \"#e5e7eb\",\n    alignItems: \"center\",\n    justifyContent: \"center\",\n  },\n  size_sm: {\n    height: 32,\n    width: 32,\n  },\n  size_default: {\n    height: 40,\n    width: 40,\n  },\n  size_lg: {\n    height: 56,\n    width: 56,\n  },\n  image: {\n    height: \"100%\",\n    width: \"100%\",\n  },\n  fallback: {\n    fontWeight: \"500\",\n    color: \"#4b5563\",\n  },\n  fallbackSize_sm: {\n    fontSize: 12,\n  },\n  fallbackSize_default: {\n    fontSize: 14,\n  },\n  fallbackSize_lg: {\n    fontSize: 18,\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}

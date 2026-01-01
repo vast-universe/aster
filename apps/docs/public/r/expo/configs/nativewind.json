@@ -1,0 +1,58 @@
+{
+  "name": "nativewind",
+  "type": "registry:config",
+  "description": "NativeWind v5 (Tailwind CSS for React Native)",
+  "files": [
+    {
+      "path": "configs/nativewind/global.css",
+      "type": "registry:config",
+      "target": "global.css",
+      "content": "@import \"tailwindcss\";\n"
+    },
+    {
+      "path": "configs/nativewind/metro.config.js",
+      "type": "registry:config",
+      "target": "metro.config.js",
+      "content": "const { getDefaultConfig } = require(\"expo/metro-config\");\nconst { withNativeWind } = require(\"nativewind/metro\");\n\nconst config = getDefaultConfig(__dirname);\n\nmodule.exports = withNativeWind(config, { input: \"./global.css\" });\n"
+    },
+    {
+      "path": "configs/nativewind/postcss.config.mjs",
+      "type": "registry:config",
+      "target": "postcss.config.mjs",
+      "content": "export default {\n  plugins: {\n    \"@tailwindcss/postcss\": {},\n  },\n};\n"
+    },
+    {
+      "path": "configs/nativewind/nativewind-env.d.ts",
+      "type": "registry:config",
+      "target": "nativewind-env.d.ts",
+      "content": "/// <reference types=\"nativewind/types\" />\n"
+    },
+    {
+      "path": "configs/nativewind/lib/utils.ts",
+      "type": "registry:lib",
+      "target": "lib/utils.ts",
+      "content": "import { clsx, type ClassValue } from \"clsx\";\nimport { twMerge } from \"tailwind-merge\";\n\nexport function cn(...inputs: ClassValue[]) {\n  return twMerge(clsx(inputs));\n}\n"
+    }
+  ],
+  "dependencies": [
+    "nativewind",
+    "react-native-reanimated",
+    "react-native-safe-area-context",
+    "clsx",
+    "tailwind-merge",
+    "class-variance-authority"
+  ],
+  "devDependencies": [
+    "tailwindcss",
+    "@tailwindcss/postcss"
+  ],
+  "transforms": [
+    {
+      "file": "tsconfig.json",
+      "append": {
+        "key": "include",
+        "value": "nativewind-env.d.ts"
+      }
+    }
+  ]
+}

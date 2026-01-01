@@ -1,7 +1,8 @@
 {
   "name": "aster",
   "version": "0.1.0",
-  "description": "跨框架开发脚手架 - 项目创建与组件管理",
+  "description": "跨框架组件库 CLI - 安装、管理和发布 UI 组件、Hooks、工具函数",
+  "type": "module",
   "bin": {
     "aster": "./dist/index.js"
   },
@@ -9,30 +10,53 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "dev": "tsup src/index.ts --watch"
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "dev": "tsup src/index.ts --format esm --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run"
   },
   "dependencies": {
-    "commander": "^12.0.0",
-    "prompts": "^2.4.2",
     "chalk": "^5.3.0",
-    "ora": "^8.0.0"
+    "commander": "^12.0.0",
+    "fs-extra": "^11.2.0",
+    "glob": "^10.3.0",
+    "open": "^10.1.0",
+    "ora": "^8.0.0",
+    "prompts": "^2.4.2",
+    "semver": "^7.6.0"
   },
   "devDependencies": {
-    "tsup": "^8.0.0",
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.0.0",
     "@types/prompts": "^2.4.9",
-    "typescript": "^5.3.0"
+    "@types/semver": "^7.5.8",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "keywords": [
-    "react-native",
     "expo",
-    "react",
-    "vue",
-    "angular",
-    "scaffold",
+    "react-native",
+    "components",
+    "hooks",
+    "ui",
     "cli",
-    "components"
+    "registry",
+    "nativewind"
   ],
+  "author": "nicepkg",
+  "homepage": "https://aster.dev",
+  "bugs": {
+    "url": "https://github.com/nicepkg/aster/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicepkg/aster.git",
+    "directory": "packages/cli"
+  },
   "license": "MIT"
 }

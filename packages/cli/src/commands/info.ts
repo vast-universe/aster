@@ -1,73 +1,72 @@
-import chalk from "chalk";
-import { getConfig, hasConfig } from "../utils/config";
-import { fileExists, getInstalledComponents } from "../core/fs";
+/**
+ * info 命令 - 显示配置信息
+ */
+import { logger, fs, readConfig, hasConfig, getInstalledResources } from "../lib";
 
 export async function info(): Promise<void> {
-  console.log(chalk.bold("\n📋 Aster 配置信息\n"));
+  const cwd = process.cwd();
+
+  logger.header("📋", "Aster 配置信息");
 
   // 检查配置文件
-  if (!hasConfig()) {
-    console.log(chalk.yellow("⚠ 未初始化"));
-    console.log(chalk.dim("  运行 npx aster init 初始化项目\n"));
+  if (!(await hasConfig(cwd))) {
+    logger.warn("未初始化");
+    logger.dim("运行 npx aster init 初始化项目");
     return;
   }
 
-  const config = await getConfig();
+  const config = await readConfig(cwd);
+  if (!config) {
+    logger.error("无法读取配置文件");
+    return;
+  }
 
-  console.log(chalk.cyan("配置文件:"), "aster.json");
-  console.log(chalk.cyan("框架:"), config.framework || "未指定");
-  console.log(chalk.cyan("样式方案:"), config.style);
-  console.log(chalk.cyan("TypeScript:"), config.typescript ? "是" : "否");
+  logger.item("配置文件", "aster.json");
+  logger.item("框架", config.framework);
+  logger.item("样式方案", config.style);
 
-  console.log();
-  console.log(chalk.cyan("路径配置:"));
-  console.log(`  组件: ${config.paths.components}`);
-  console.log(`  工具: ${config.paths.lib}`);
-  console.log(`  Hooks: ${config.paths.hooks || "未配置"}`);
+  logger.newline();
+  logger.info("路径配置:");
+  logger.item("  组件", config.aliases.components);
+  logger.item("  Hooks", config.aliases.hooks);
+  logger.item("  工具", config.aliases.lib);
 
   // 检查目录是否存在
-  const componentsExist = fileExists(config.paths.components);
-  const libExist = fileExists(config.paths.lib);
-  const hooksExist = config.paths.hooks && fileExists(config.paths.hooks);
+  const componentsDir = config.aliases.components.replace("@/", "src/");
+  const hooksDir = config.aliases.hooks.replace("@/", "src/");
+  const libDir = config.aliases.lib.replace("@/", "src/");
 
-  console.log();
-  console.log(chalk.cyan("目录状态:"));
-  console.log(
-    `  ${config.paths.components}: ${
-      componentsExist ? chalk.green("✔ 存在") : chalk.dim("未创建")
-    }`
-  );
-  console.log(
-    `  ${config.paths.lib}: ${
-      libExist ? chalk.green("✔ 存在") : chalk.dim("未创建")
-    }`
-  );
-  if (config.paths.hooks) {
-    console.log(
-      `  ${config.paths.hooks}: ${
-        hooksExist ? chalk.green("✔ 存在") : chalk.dim("未创建")
-      }`
-    );
+  logger.newline();
+  logger.info("目录状态:");
+
+  const dirs = [
+    { name: componentsDir, label: "组件" },
+    { name: hooksDir, label: "Hooks" },
+    { name: libDir, label: "工具" },
+  ];
+
+  for (const dir of dirs) {
+    const exists = await fs.exists(fs.join(cwd, dir.name));
+    logger.log(`  ${dir.name}: ${exists ? "✔ 存在" : "未创建"}`);
   }
 
-  // 统计已安装组件
-  if (componentsExist) {
-    const components = getInstalledComponents(config.paths.components);
-    console.log();
-    console.log(chalk.cyan("已安装组件:"), components.length);
-    if (components.length > 0) {
-      console.log(chalk.dim("  " + components.join(", ")));
-    }
-  }
+  // 统计已安装资源
+  const installed = await getInstalledResources(cwd);
 
-  // 显示 registries
-  if (config.registries && Object.keys(config.registries).length > 0) {
-    console.log();
-    console.log(chalk.cyan("第三方 Registry:"));
-    for (const [name, url] of Object.entries(config.registries)) {
-      console.log(`  ${name}: ${typeof url === "string" ? url : url.url}`);
-    }
-  }
+  logger.newline();
+  logger.info("已安装资源:");
 
-  console.log();
+  const counts = {
+    ui: installed.filter((i) => i.type === "ui").length,
+    hook: installed.filter((i) => i.type === "hook").length,
+    lib: installed.filter((i) => i.type === "lib").length,
+    config: installed.filter((i) => i.type === "config").length,
+  };
+
+  logger.log(`  UI 组件: ${counts.ui}`);
+  logger.log(`  Hooks: ${counts.hook}`);
+  logger.log(`  工具函数: ${counts.lib}`);
+  logger.log(`  配置: ${counts.config}`);
+
+  logger.newline();
 }

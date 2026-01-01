@@ -1,17 +1,17 @@
 /**
- * Init 命令 - 初始化 Aster 配置
+ * init 命令 - 初始化 Aster 配置
  */
-
 import prompts from "prompts";
-import chalk from "chalk";
-import { writeJson, fileExists } from "../core/fs";
-import { getFrameworkChoices, getFrameworkAdapter } from "../utils/frameworks";
+import { logger, fs, hasConfig, writeConfig } from "../lib";
+import type { AsterConfig, Style, Framework } from "../types";
 
 export async function init(): Promise<void> {
-  console.log(chalk.bold("\n🚀 初始化 Aster\n"));
+  const cwd = process.cwd();
+
+  logger.header("🚀", "初始化 Aster");
 
   // 检查是否已存在配置
-  if (fileExists("aster.json")) {
+  if (await hasConfig(cwd)) {
     const { overwrite } = await prompts({
       type: "confirm",
       name: "overwrite",
@@ -20,38 +20,25 @@ export async function init(): Promise<void> {
     });
 
     if (!overwrite) {
-      console.log(chalk.yellow("\n已取消\n"));
+      logger.warn("已取消");
       return;
     }
   }
 
-  // 选择框架
-  const { framework } = await prompts({
-    type: "select",
-    name: "framework",
-    message: "选择框架:",
-    choices: getFrameworkChoices(),
-    initial: 0,
-  });
-
-  if (!framework) {
-    console.log(chalk.red("\n已取消\n"));
-    return;
-  }
-
-  const adapter = getFrameworkAdapter(framework);
-
-  // 选择样式
+  // 选择样式方案
   const { style } = await prompts({
     type: "select",
     name: "style",
     message: "选择样式方案:",
-    choices: adapter.styles,
+    choices: [
+      { title: "NativeWind (Tailwind CSS)", value: "nativewind" },
+      { title: "StyleSheet (原生样式)", value: "stylesheet" },
+    ],
     initial: 0,
   });
 
   if (!style) {
-    console.log(chalk.red("\n已取消\n"));
+    logger.warn("已取消");
     return;
   }
 
@@ -61,52 +48,66 @@ export async function init(): Promise<void> {
       type: "text",
       name: "components",
       message: "组件存放目录:",
-      initial: adapter.defaultPaths.ui,
-    },
-    {
-      type: "text",
-      name: "lib",
-      message: "工具函数目录:",
-      initial: adapter.defaultPaths.lib,
+      initial: "@/components",
     },
     {
       type: "text",
       name: "hooks",
       message: "Hooks 目录:",
-      initial: adapter.defaultPaths.hooks,
+      initial: "@/hooks",
+    },
+    {
+      type: "text",
+      name: "lib",
+      message: "工具函数目录:",
+      initial: "@/lib",
     },
   ]);
 
-  // TypeScript
-  const { typescript } = await prompts({
-    type: "confirm",
-    name: "typescript",
-    message: "使用 TypeScript?",
-    initial: true,
-  });
+  if (!paths.components) {
+    logger.warn("已取消");
+    return;
+  }
 
-  const config = {
-    $schema: "https://aster.dev/schema.json",
-    framework,
-    style,
-    typescript,
-    paths: {
+  // 创建配置
+  const config: AsterConfig = {
+    $schema: "https://aster.dev/schema/aster.json",
+    framework: "expo" as Framework,
+    style: style as Style,
+    aliases: {
       components: paths.components,
-      lib: paths.lib,
       hooks: paths.hooks,
+      lib: paths.lib,
+    },
+    installed: {
+      ui: {},
+      hook: {},
+      lib: {},
+      config: {},
     },
   };
 
-  await writeJson("aster.json", config);
+  await writeConfig(config, cwd);
 
-  console.log(chalk.green("\n✔ 创建 aster.json"));
-  console.log(chalk.dim(`   框架: ${framework}`));
-  console.log(chalk.dim(`   样式方案: ${style}`));
+  // 创建目录 (直接使用别名路径，去掉 @/ 前缀)
+  const dirs = [
+    paths.components.replace(/^[@~]\//, ""),
+    paths.hooks.replace(/^[@~]\//, ""),
+    paths.lib.replace(/^[@~]\//, ""),
+  ];
 
-  // 提示用户配置路径别名
-  console.log(chalk.yellow("\n⚠ 请确保在 tsconfig.json 中配置路径别名:"));
-  console.log(
-    chalk.dim(`
+  for (const dir of dirs) {
+    await fs.ensureDir(fs.join(cwd, dir));
+  }
+
+  logger.success("创建 aster.json");
+  logger.dim(`  框架: expo`);
+  logger.dim(`  样式方案: ${style}`);
+
+  // 提示配置路径别名
+  logger.newline();
+  logger.warn("请确保在 tsconfig.json 中配置路径别名:");
+  logger.dim(`
   {
     "compilerOptions": {
       "baseUrl": ".",
@@ -115,20 +116,15 @@ export async function init(): Promise<void> {
       }
     }
   }
-`)
-  );
+`);
 
-  // NativeWind 风格额外提示
+  // NativeWind 提示
   if (style === "nativewind") {
-    console.log(chalk.yellow("⚠ NativeWind 风格需要先配置 NativeWind:"));
-    console.log(
-      chalk.dim("   https://www.nativewind.dev/getting-started/expo-router\n")
-    );
+    logger.warn("NativeWind 风格需要先配置 NativeWind:");
+    logger.dim("  https://www.nativewind.dev/getting-started/expo-router");
   }
 
-  console.log(
-    chalk.dim("运行 ") +
-      chalk.cyan("npx aster add button") +
-      chalk.dim(" 添加第一个组件\n")
-  );
+  logger.newline();
+  logger.dim("运行 npx aster add button 添加第一个组件");
+  logger.newline();
 }

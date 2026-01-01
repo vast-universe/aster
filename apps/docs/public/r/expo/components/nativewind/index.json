@@ -1,0 +1,219 @@
+[
+  {
+    "name": "button",
+    "type": "registry:ui",
+    "description": "可点击的按钮组件，支持多种变体和状态",
+    "dependencies": [
+      "class-variance-authority"
+    ],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "input",
+    "type": "registry:ui",
+    "description": "文本输入框组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "textarea",
+    "type": "registry:ui",
+    "description": "多行文本输入框组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "checkbox",
+    "type": "registry:ui",
+    "description": "复选框组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "radio",
+    "type": "registry:ui",
+    "description": "单选框组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "switch",
+    "type": "registry:ui",
+    "description": "开关组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "select",
+    "type": "registry:ui",
+    "description": "下拉选择组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "slider",
+    "type": "registry:ui",
+    "description": "滑块组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "avatar",
+    "type": "registry:ui",
+    "description": "头像组件，支持图片和文字",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "badge",
+    "type": "registry:ui",
+    "description": "徽章组件",
+    "dependencies": [
+      "class-variance-authority"
+    ],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "card",
+    "type": "registry:ui",
+    "description": "卡片容器组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "skeleton",
+    "type": "registry:ui",
+    "description": "骨架屏加载占位组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "divider",
+    "type": "registry:ui",
+    "description": "分割线组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "tabs",
+    "type": "registry:ui",
+    "description": "标签页组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "modal",
+    "type": "registry:ui",
+    "description": "模态框组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "dialog",
+    "type": "registry:ui",
+    "description": "对话框组件，带标题和操作按钮",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "action-sheet",
+    "type": "registry:ui",
+    "description": "操作菜单组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "alert",
+    "type": "registry:ui",
+    "description": "警告提示组件",
+    "dependencies": [
+      "class-variance-authority"
+    ],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "toast",
+    "type": "registry:ui",
+    "description": "消息提示组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "loading",
+    "type": "registry:ui",
+    "description": "加载指示器组件",
+    "dependencies": [],
+    "devDependencies": [],
+    "registryDependencies": [
+      "utils"
+    ]
+  },
+  {
+    "name": "utils",
+    "type": "registry:lib",
+    "description": "工具函数 (cn)",
+    "dependencies": [
+      "clsx",
+      "tailwind-merge"
+    ],
+    "devDependencies": [],
+    "registryDependencies": []
+  }
+]

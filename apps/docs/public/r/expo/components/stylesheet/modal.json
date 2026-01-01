@@ -1,0 +1,14 @@
+{
+  "name": "modal",
+  "type": "registry:ui",
+  "description": "模态框组件",
+  "files": [
+    {
+      "path": "ui/modal.tsx",
+      "type": "registry:ui",
+      "content": "import {\n  Modal as RNModal,\n  View,\n  Pressable,\n  Text,\n  StyleSheet,\n  type ViewStyle,\n} from \"react-native\";\n\nexport interface ModalProps {\n  visible: boolean;\n  onClose: () => void;\n  title?: string;\n  children: React.ReactNode;\n  style?: ViewStyle;\n}\n\nexport function Modal({\n  visible,\n  onClose,\n  title,\n  children,\n  style,\n}: ModalProps) {\n  return (\n    <RNModal\n      visible={visible}\n      transparent\n      animationType=\"fade\"\n      onRequestClose={onClose}\n    >\n      <Pressable style={styles.overlay} onPress={onClose}>\n        <Pressable style={[styles.content, style]} onPress={(e) => e.stopPropagation()}>\n          {title && <Text style={styles.title}>{title}</Text>}\n          {children}\n        </Pressable>\n      </Pressable>\n    </RNModal>\n  );\n}\n\nconst styles = StyleSheet.create({\n  overlay: {\n    flex: 1,\n    justifyContent: \"center\",\n    alignItems: \"center\",\n    backgroundColor: \"rgba(0, 0, 0, 0.5)\",\n  },\n  content: {\n    backgroundColor: \"#fff\",\n    borderRadius: 12,\n    padding: 24,\n    marginHorizontal: 16,\n    width: \"100%\",\n    maxWidth: 384,\n  },\n  title: {\n    fontSize: 18,\n    fontWeight: \"600\",\n    marginBottom: 16,\n    color: \"#111827\",\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}

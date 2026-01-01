@@ -1,0 +1,14 @@
+{
+  "name": "alert",
+  "type": "registry:ui",
+  "description": "警告提示组件",
+  "files": [
+    {
+      "path": "ui/alert.tsx",
+      "type": "registry:ui",
+      "content": "import { View, Text, Pressable, StyleSheet } from \"react-native\";\n\ntype AlertVariant = \"default\" | \"info\" | \"success\" | \"warning\" | \"error\";\n\nconst variantStyles = {\n  default: { bg: \"#f3f4f6\", text: \"#374151\" },\n  info: { bg: \"#eff6ff\", text: \"#1d4ed8\" },\n  success: { bg: \"#f0fdf4\", text: \"#15803d\" },\n  warning: { bg: \"#fefce8\", text: \"#a16207\" },\n  error: { bg: \"#fef2f2\", text: \"#b91c1c\" },\n};\n\nconst iconMap = {\n  default: \"ℹ️\",\n  info: \"ℹ️\",\n  success: \"✅\",\n  warning: \"⚠️\",\n  error: \"❌\",\n};\n\nexport interface AlertProps {\n  variant?: AlertVariant;\n  title?: string;\n  children: React.ReactNode;\n  onClose?: () => void;\n}\n\nexport function Alert({\n  variant = \"default\",\n  title,\n  children,\n  onClose,\n}: AlertProps) {\n  const colors = variantStyles[variant];\n\n  return (\n    <View\n      style={[styles.container, { backgroundColor: colors.bg }]}\n      accessible\n      accessibilityRole=\"alert\"\n    >\n      <Text style={styles.icon}>{iconMap[variant]}</Text>\n      <View style={styles.content}>\n        {title && (\n          <Text style={[styles.title, { color: colors.text }]}>{title}</Text>\n        )}\n        <Text style={[styles.message, { color: colors.text }]}>{children}</Text>\n      </View>\n      {onClose && (\n        <Pressable onPress={onClose} style={styles.close}>\n          <Text style={styles.closeText}>✕</Text>\n        </Pressable>\n      )}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    padding: 16,\n    borderRadius: 8,\n    flexDirection: \"row\",\n    gap: 12,\n  },\n  icon: {\n    fontSize: 16,\n  },\n  content: {\n    flex: 1,\n  },\n  title: {\n    fontWeight: \"600\",\n    marginBottom: 4,\n    fontSize: 14,\n  },\n  message: {\n    fontSize: 14,\n  },\n  close: {\n    padding: 4,\n  },\n  closeText: {\n    color: \"#9ca3af\",\n  },\n});\n"
+    }
+  ],
+  "dependencies": [],
+  "registryDependencies": []
+}
