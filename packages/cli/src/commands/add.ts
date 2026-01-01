@@ -1,150 +1,307 @@
-import path from "path";
-import chalk from "chalk";
+/**
+ * add 命令 - 添加组件/hooks/lib/config
+ */
 import ora from "ora";
-import { getConfig, getTargetDir } from "../utils/config";
-import { resolveAllDependencies } from "../utils/fetcher";
-import { parseSource, formatSource, isConfigSource } from "../utils/source-parser";
-import { writeFile, fileExists, appendExport, getFileDiff } from "../core/fs";
-import { installDeps, installDevDeps, filterInstalledDeps } from "../core/deps";
-import { installConfig } from "../core/installer";
-import { recordComponent, recordConfig } from "../core/lockfile";
+import prompts from "prompts";
+import { logger, fs, readConfig, markInstalled } from "../lib";
+import { fetchResource, checkSecurityAdvisories } from "../services";
+import {
+  DependencyResolver,
+  parseResourceRef,
+  getResourceKey,
+  InstallTransaction,
+  scanComponent,
+  printSecurityReport,
+} from "../core";
+import type { ResourceRef, ResourceContent, Framework, Style } from "../types";
 
 interface AddOptions {
   force?: boolean;
-  skipExport?: boolean;
+  skipSecurity?: boolean;
 }
 
-export async function add(components: string[], options: AddOptions): Promise<void> {
+/**
+ * 解析输入为 ResourceRef
+ */
+function parseInput(input: string): ResourceRef | null {
+  if (input.startsWith("@")) {
+    return parseResourceRef(input);
+  }
+
+  // 简写格式: type:name@version 或 name@version
+  let type: ResourceRef["type"] = "ui";
+  let name = input;
+  let version: string | undefined;
+
+  // 提取版本号
+  if (name.includes("@")) {
+    const atIndex = name.lastIndexOf("@");
+    version = name.slice(atIndex + 1);
+    name = name.slice(0, atIndex);
+  }
+
+  if (name.startsWith("config:")) {
+    type = "config";
+    name = name.slice(7);
+  } else if (name.startsWith("hook:")) {
+    type = "hook";
+    name = name.slice(5);
+  } else if (name.startsWith("lib:")) {
+    type = "lib";
+    name = name.slice(4);
+  }
+
+  return { namespace: "aster", type, name, version };
+}
+
+/**
+ * 解析简写格式的依赖引用 (type:name 或 name)
+ * 默认使用父资源的 namespace
+ */
+function parseShorthandRef(input: string, defaultNamespace: string): ResourceRef | null {
+  // 先尝试完整格式
+  if (input.startsWith("@")) {
+    return parseResourceRef(input);
+  }
+
+  // 简写格式: type:name 或 name
+  let type: ResourceRef["type"] = "ui";
+  let name = input;
+
+  if (input.startsWith("config:")) {
+    type = "config";
+    name = input.slice(7);
+  } else if (input.startsWith("hook:")) {
+    type = "hook";
+    name = input.slice(5);
+  } else if (input.startsWith("lib:")) {
+    type = "lib";
+    name = input.slice(4);
+  }
+
+  // 验证 name 格式
+  if (!/^[a-z0-9_-]+$/i.test(name)) {
+    return null;
+  }
+
+  return { namespace: defaultNamespace, type, name };
+}
+
+export async function add(items: string[], options: AddOptions = {}): Promise<void> {
   const spinner = ora();
+  const cwd = process.cwd();
 
-  try {
-    const config = await getConfig();
-    const { style } = config;
+  // 1. 读取配置
+  const config = await readConfig(cwd);
+  if (!config) {
+    logger.error("找不到 aster.json，请先运行 npx aster init");
+    return;
+  }
 
-    const configItems = components.filter(isConfigSource);
-    const componentItems = components.filter((c) => !isConfigSource(c));
+  const framework = config.framework as Framework;
+  const style = config.style as Style;
 
-    if (componentItems.length > 0) {
-      console.log(chalk.dim(`\n样式方案: ${style}\n`));
+  // 2. 解析资源引用
+  const refs: ResourceRef[] = [];
+  for (const item of items) {
+    const ref = parseInput(item);
+    if (!ref) {
+      logger.error(`无效的资源引用: ${item}`);
+      return;
     }
+    refs.push(ref);
+  }
 
-    for (const comp of components) {
-      const source = parseSource(comp);
-      if (source.type !== "official") {
-        console.log(chalk.dim(`来源: ${formatSource(source)}`));
-      }
-    }
+  logger.header("📦", `安装 ${refs.length} 个资源`);
 
-    // 处理配置片段
-    if (configItems.length > 0) {
-      spinner.start("解析配置片段...");
-      const configResolved = await resolveAllDependencies(configItems, style, config);
-      spinner.succeed(`配置片段: ${configResolved.map((r) => r.item.name).join(", ")}`);
+  // 3. 解析依赖
+  spinner.start("解析依赖...");
 
-      for (const { source, item } of configResolved) {
-        spinner.start(`安装 ${item.name}...`);
-        const result = await installConfig(item, { force: options.force });
-        if (result.files.length > 0) {
-          spinner.succeed(`${item.name} 安装完成`);
-          result.files.forEach((f) => console.log(chalk.dim(`  + ${f}`)));
-          await recordConfig(item.name, source, result.files);
-        } else {
-          spinner.info(`${item.name} 已存在 (使用 --force 覆盖)`);
+  const resolver = new DependencyResolver(async (ref) => {
+    try {
+      const content = await fetchResource(ref, framework, style);
+      const deps: ResourceRef[] = [];
+
+      if (content.registryDependencies) {
+        for (const dep of content.registryDependencies) {
+          // 尝试完整格式 @namespace/type:name
+          let depRef = parseResourceRef(dep);
+          
+          // 如果解析失败，尝试简写格式 type:name 或 name
+          if (!depRef) {
+            depRef = parseShorthandRef(dep, ref.namespace);
+          }
+          
+          if (depRef) deps.push(depRef);
         }
       }
+
+      return { ref, content, dependencies: deps };
+    } catch {
+      return null;
+    }
+  });
+
+  const { resources, order, errors } = await resolver.resolve(refs);
+
+  if (errors.length > 0) {
+    spinner.fail("依赖解析失败");
+    errors.forEach((e) => logger.error(`  ${e}`));
+    return;
+  }
+
+  spinner.succeed(`解析完成: ${resources.length} 个资源`);
+
+  logger.dim("\n将安装:");
+  order.forEach((key) => logger.dim(`  ${key}`));
+  logger.newline();
+
+  // 4. 安全检查（社区组件）
+  const communityResources = resources.filter((r) => r.ref.namespace !== "aster");
+
+  if (communityResources.length > 0 && !options.skipSecurity) {
+    spinner.start("安全检查...");
+
+    try {
+      const { advisories } = await checkSecurityAdvisories(communityResources.map((r) => r.ref));
+
+      if (advisories.length > 0) {
+        spinner.warn("发现安全公告");
+        for (const adv of advisories) {
+          logger.error(`\n  ⚠ ${adv.title}`);
+          logger.dim(`    ${adv.description}`);
+        }
+
+        const { proceed } = await prompts({
+          type: "confirm",
+          name: "proceed",
+          message: "是否继续安装?",
+          initial: false,
+        });
+
+        if (!proceed) {
+          logger.dim("\n已取消");
+          return;
+        }
+      } else {
+        spinner.succeed("安全检查通过");
+      }
+    } catch {
+      spinner.warn("无法检查安全公告");
     }
 
-    // 处理普通组件
-    if (componentItems.length > 0) {
-      spinner.start("解析组件依赖...");
-      const resolvedItems = await resolveAllDependencies(componentItems, style, config);
-      const componentNames = resolvedItems.map((r) => r.item.name);
-      spinner.succeed(`解析依赖: ${componentNames.join(", ")}`);
+    // 本地代码扫描
+    spinner.start("扫描代码...");
+    let hasHighRisk = false;
 
-      if (resolvedItems.length === 0) {
-        console.log(chalk.yellow("\n没有找到可安装的组件\n"));
+    for (const resource of communityResources) {
+      const report = scanComponent(resource.content);
+      if (report.highCount > 0) {
+        hasHighRisk = true;
+        logger.error(`\n  ${getResourceKey(resource.ref)}:`);
+        printSecurityReport(report, true);
+      }
+    }
+
+    if (hasHighRisk) {
+      spinner.warn("发现高风险代码");
+
+      const { proceed } = await prompts({
+        type: "confirm",
+        name: "proceed",
+        message: "是否继续安装?",
+        initial: false,
+      });
+
+      if (!proceed) {
+        logger.dim("\n已取消");
         return;
       }
+    } else {
+      spinner.succeed("代码扫描通过");
+    }
+  }
 
-      const dependencies = new Set<string>();
-      const devDependencies = new Set<string>();
+  // 5. 检查文件冲突
+  const conflicts: string[] = [];
+  for (const resource of resources) {
+    const content = resource.content as ResourceContent;
+    for (const file of content.files || []) {
+      if (await fs.exists(fs.resolve(cwd, file.path))) {
+        conflicts.push(file.path);
+      }
+    }
+  }
 
-      for (const { item } of resolvedItems) {
-        item.dependencies?.forEach((dep) => dependencies.add(dep));
-        item.devDependencies?.forEach((dep) => devDependencies.add(dep));
+  if (conflicts.length > 0 && !options.force) {
+    logger.warn("\n以下文件已存在:");
+    conflicts.forEach((f) => logger.dim(`  ${f}`));
+
+    const { overwrite } = await prompts({
+      type: "confirm",
+      name: "overwrite",
+      message: "是否覆盖?",
+      initial: false,
+    });
+
+    if (!overwrite) {
+      logger.dim("\n已取消");
+      return;
+    }
+  }
+
+  // 6. 安装（事务）
+  const transaction = new InstallTransaction(cwd);
+
+  try {
+    await transaction.begin();
+    spinner.start("安装中...");
+
+    const npmDeps: string[] = [];
+    const npmDevDeps: string[] = [];
+
+    for (const key of order) {
+      const resource = resources.find((r) => getResourceKey(r.ref) === key);
+      if (!resource) continue;
+
+      const content = resource.content as ResourceContent;
+
+      for (const file of content.files || []) {
+        await transaction.writeFile(file.path, file.content);
       }
 
-      if (dependencies.size > 0) {
-        const depsToInstall = await filterInstalledDeps([...dependencies]);
-        if (depsToInstall.length > 0) {
-          spinner.start(`安装依赖: ${depsToInstall.join(", ")}`);
-          installDeps(depsToInstall);
-          spinner.succeed("依赖安装完成");
-        }
+      if (content.dependencies) npmDeps.push(...content.dependencies);
+      if (content.devDependencies) npmDevDeps.push(...content.devDependencies);
+    }
+
+    await transaction.commit();
+    spinner.succeed(`安装完成: ${resources.length} 个资源`);
+
+    // 更新配置
+    for (const resource of resources) {
+      const content = resource.content as ResourceContent;
+      await markInstalled(resource.ref.type, resource.ref.name, content.version, resource.ref.namespace, undefined, cwd);
+    }
+
+    // 提示安装依赖
+    const uniqueDeps = [...new Set(npmDeps)];
+    const uniqueDevDeps = [...new Set(npmDevDeps)];
+
+    if (uniqueDeps.length > 0 || uniqueDevDeps.length > 0) {
+      logger.header("📦", "需要安装以下依赖:");
+      if (uniqueDeps.length > 0) {
+        logger.log(`  npx expo install ${uniqueDeps.join(" ")}`);
       }
-
-      if (devDependencies.size > 0) {
-        const devDepsToInstall = await filterInstalledDeps([...devDependencies]);
-        if (devDepsToInstall.length > 0) {
-          spinner.start(`安装开发依赖: ${devDepsToInstall.join(", ")}`);
-          installDevDeps(devDepsToInstall);
-          spinner.succeed("开发依赖安装完成");
-        }
-      }
-
-      const installedComponents: string[] = [];
-
-      for (const { source, item } of resolvedItems) {
-        const componentFiles: string[] = [];
-
-        for (const file of item.files) {
-          let targetPath: string;
-          if (file.target) {
-            targetPath = file.target;
-          } else {
-            const targetDir = getTargetDir(file.type, config);
-            targetPath = path.join(targetDir, path.basename(file.path));
-          }
-
-          if (fileExists(targetPath) && !options.force) {
-            const { hasChanges, oldContent } = await getFileDiff(targetPath, file.content);
-            if (hasChanges) {
-              console.log(chalk.yellow(`⚠ 跳过 ${targetPath} (已存在且有差异，使用 --force 覆盖)`));
-              console.log(chalk.dim(`   本地: ${oldContent.split("\n").length} 行, 远程: ${file.content.split("\n").length} 行`));
-              continue;
-            }
-          }
-
-          await writeFile(targetPath, file.content);
-          console.log(chalk.green(`✔ ${item.name} → ${targetPath}`));
-          componentFiles.push(targetPath);
-
-          if (file.type === "registry:ui") {
-            const componentName = path.basename(targetPath, path.extname(targetPath));
-            installedComponents.push(componentName);
-          }
-        }
-
-        if (componentFiles.length > 0) {
-          await recordComponent(item.name, source, componentFiles);
-        }
-      }
-
-      if (!options.skipExport && installedComponents.length > 0) {
-        const indexPath = path.join(config.paths.components, "index.ts");
-        for (const componentName of installedComponents) {
-          await appendExport(indexPath, componentName);
-        }
-        console.log(chalk.dim(`\n已更新导出: ${indexPath}`));
+      if (uniqueDevDeps.length > 0) {
+        logger.log(`  npm install -D ${uniqueDevDeps.join(" ")}`);
       }
     }
 
-    console.log(chalk.green("\n完成! 🎉\n"));
+    logger.newline();
+    logger.success("完成");
   } catch (error) {
-    spinner.fail();
-    if (error instanceof Error) {
-      console.error(chalk.red(`\n错误: ${error.message}\n`));
-    }
-    process.exit(1);
+    spinner.fail("安装失败");
+    logger.error((error as Error).message);
+    await transaction.rollback();
   }
 }

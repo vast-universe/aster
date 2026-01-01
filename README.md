@@ -1,65 +1,54 @@
 # Aster
 
-跨框架开发脚手架 - 项目创建与组件管理
+跨框架组件库 CLI - 安装、管理和发布 UI 组件、Hooks、工具函数
 
 ## 特点
 
-- 📦 **多框架支持** - 支持 React Native、React、Vue 等多种框架
-- 🎨 **组件管理** - 统一的组件添加、更新、删除流程
-- 🔧 **插件化架构** - 通过插件扩展功能，支持社区贡献
-- 📁 **模板系统** - 丰富的项目模板，支持自定义
-- 🌙 **暗黑模式** - 所有组件支持暗黑模式
-- ♿ **无障碍** - 内置 accessibility 支持
-- 🌏 **国内镜像** - 支持国内镜像加速
+- 🚀 **项目创建** - 一键创建企业级项目模板
+- 📦 **组件管理** - 统一的组件添加、更新、删除流程
+- 🎨 **多种资源** - 支持 UI 组件、Hooks、工具函数、配置片段
+- 🌐 **社区生态** - 官方组件 + 社区组件，支持命名空间
+- 🔀 **跨框架** - 支持 Expo/React Native，预留 Vue/Nuxt 扩展
+- 🔒 **安全检查** - 社区组件安装前自动安全扫描
+- 🔄 **事务安装** - 安装失败自动回滚，保证项目完整性
 
 ## 快速开始
 
 ### 1. 创建项目
 
 ```bash
-# 创建 React Native 项目
-npx aster create my-rn-app --template expo-default
+# 交互式创建
+npx aster create my-app
 
-# 创建 Vue 项目
-npx aster create my-vue-app --template vue3-ts
+# 指定模板
+npx aster create my-app --starter standard
 
-# 创建 React 项目
-npx aster create my-react-app --template react-ts
+# 使用默认配置
+npx aster create my-app --yes
 ```
 
-### 2. 初始化配置
+### 2. 添加组件
 
 ```bash
-npx aster init
-```
-
-选择样式方案：
-- **NativeWind** - 使用 Tailwind 语法，需要先配置 NativeWind
-- **StyleSheet** - 纯 RN 原生样式，零外部依赖
-
-### 3. 配置路径别名
-
-在 `tsconfig.json` 中添加：
-
-```json
-{
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./*"]
-    }
-  }
-}
-```
-
-### 4. 添加组件
-
-```bash
+# 官方组件
 npx aster add button
 npx aster add button input modal
+
+# 指定版本
+npx aster add button@1.0.0
+npx aster add @vast-universe/button@1.0.0
+
+# 社区组件
+npx aster add @zhangsan/fancy-button
+
+# Hooks
+npx aster add hook:use-debounce
+
+# 工具函数
+npx aster add lib:utils
 ```
 
-### 5. 使用组件
+### 3. 使用组件
 
 ```tsx
 import { Button } from "@/components/ui/button";
@@ -73,133 +62,75 @@ export default function App() {
 }
 ```
 
-## 可用组件 (20+)
-
-| 分类 | 组件 |
-|------|------|
-| 表单 | Button, Input, Textarea, Checkbox, Radio, Switch, Select, Slider |
-| 数据展示 | Avatar, Badge, Card, Skeleton |
-| 布局 | Divider |
-| 导航 | Tabs |
-| 反馈 | Modal, Dialog, ActionSheet, Alert, Toast, Loading |
-
-```bash
-# 查看所有可用组件
-npx aster list
-```
-
 ## 命令
 
+### 项目命令
+
 ```bash
-# 基础命令
+npx aster create [name]     # 创建新项目
+npx aster init              # 初始化配置 (已有项目)
+```
+
+### 基础命令
+
+```bash
 npx aster init              # 初始化配置
-npx aster add <component>   # 添加组件
-npx aster add button --force # 覆盖已存在的文件
-npx aster remove [component] # 删除组件
-npx aster update            # 更新所有组件
-npx aster update button     # 更新指定组件
-npx aster list              # 列出所有组件
-npx aster search [query]    # 搜索组件
-npx aster diff              # 检查组件更新
-npx aster info              # 显示配置信息
-
-# 项目创建
-npx aster create <project-name> --template <template> # 创建新项目
-
-# 插件管理
-npx aster plugin list     # 列出所有插件
-npx aster plugin install  # 安装插件
-npx aster plugin remove   # 删除插件
-
-# Registry 管理
-npx aster registry list     # 列出所有 registry
-npx aster registry add      # 添加第三方 registry
-npx aster registry remove   # 删除第三方 registry
-
-# 缓存管理
-npx aster cache status      # 显示缓存状态
-npx aster cache clean       # 清理过期缓存
-npx aster cache clear       # 清空所有缓存
+npx aster add <items>       # 添加资源
+npx aster remove [items]    # 删除资源
+npx aster update [items]    # 更新资源
+npx aster list              # 列出资源
+npx aster search [query]    # 搜索资源
+npx aster diff [item]       # 检查更新
+npx aster view <item>       # 预览代码
+npx aster info              # 显示配置
 ```
 
-## 第三方组件
-
-Aster 支持从多种来源安装组件：
-
-### GitHub Registry (推荐)
-
-社区开发者只需创建 GitHub 仓库，无需部署服务器：
+### 认证命令
 
 ```bash
-# 从 GitHub 仓库安装
-npx aster add github:user/repo/component
-
-# 指定版本/分支
-npx aster add github:user/repo/component@v1.0.0
-npx aster add github:user/repo/component@main
+npx aster login             # 登录 (GitHub OAuth)
+npx aster logout            # 退出登录
+npx aster whoami            # 查看当前用户
 ```
 
-### 命名空间 Registry
-
-配置第三方 HTTP API：
+### Token 管理
 
 ```bash
-# 添加 registry
-npx aster registry add @acme https://acme-ui.com/api/r
-
-# 使用
-npx aster add @acme/data-table
+npx aster token list        # 列出所有 Token
+npx aster token create      # 创建新 Token
+npx aster token revoke <id> # 撤销 Token
 ```
 
-### 直接 URL
+### 命名空间
 
 ```bash
-npx aster add https://example.com/api/r/component.json
+npx aster namespace create <name>  # 创建命名空间
+npx aster namespace list           # 列出我的命名空间
+npx aster namespace delete <name>  # 删除命名空间
 ```
 
-### 本地文件
+### 发布组件
 
 ```bash
-npx aster add ./my-component.json
+npx aster registry create [name]   # 创建 Registry 项目
+npx aster registry build           # 构建
+npx aster registry publish         # 发布
 ```
 
-## 创建第三方 Registry
+### 其他
 
-### GitHub Registry (零成本)
-
-创建一个 GitHub 仓库，结构如下：
-
-```
-my-components/
-├── registry.json          # 组件索引
-├── nativewind/            # NativeWind 风格
-│   └── ui/
-│       └── my-button.tsx
-└── stylesheet/            # StyleSheet 风格
-    └── ui/
-        └── my-button.tsx
+```bash
+npx aster recover           # 恢复未完成的安装事务
 ```
 
-`registry.json` 格式：
+## 资源类型
 
-```json
-{
-  "name": "my-components",
-  "description": "我的 Aster 组件",
-  "components": {
-    "my-button": {
-      "name": "my-button",
-      "type": "registry:ui",
-      "description": "自定义按钮",
-      "files": ["ui/my-button.tsx"],
-      "dependencies": [],
-      "registryDependencies": ["@aster/button"]
-    }
-  }
-}
-```
-
-用户安装：`npx aster add github:your-name/my-components/my-button`
+| 类型 | 前缀 | 示例 |
+|------|------|------|
+| UI 组件 | (无) | `button`, `@zhangsan/card` |
+| Hooks | `hook:` | `hook:use-debounce` |
+| 工具函数 | `lib:` | `lib:utils` |
+| 配置片段 | `config:` | `config:nativewind` |
 
 ## 配置文件
 
@@ -207,77 +138,98 @@ my-components/
 
 ```json
 {
-  "$schema": "https://aster.dev/schema.json",
-  "framework": "react-native",
+  "$schema": "https://aster.dev/schema/aster.json",
   "style": "nativewind",
-  "typescript": true,
-  "paths": {
-    "components": "components/ui",
-    "lib": "lib"
+  "framework": "expo",
+  "aliases": {
+    "components": "@/components",
+    "hooks": "@/hooks",
+    "lib": "@/lib"
   },
-  "plugins": [
-    "@aster/react-native-plugin"
-  ]
+  "installed": {
+    "ui": {},
+    "hook": {},
+    "lib": {},
+    "config": {}
+  }
 }
 ```
 
-## 主题定制
+## 发布自己的组件
 
-### NativeWind 风格
+### 1. 创建项目
 
-通过 `tailwind.config.js` 自定义主题：
+```bash
+npx aster registry create my-components
+cd my-components
+```
 
-```js
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        primary: "#3b82f6",
-        secondary: "#6b7280",
-        destructive: "#ef4444",
-      },
+### 2. 编辑配置
+
+`registry.config.ts`:
+
+```typescript
+export default {
+  namespace: "my-namespace",
+  description: "我的组件库",
+  frameworks: ["expo"],
+  
+  components: [
+    {
+      name: "fancy-button",
+      version: "1.0.0",  // 每个组件独立版本
+      style: "nativewind",
+      description: "带动画的按钮",
+      files: [
+        "src/components/nativewind/fancy-button/fancy-button.tsx",
+        "src/components/nativewind/fancy-button/index.ts",
+      ],
+      dependencies: ["react-native-reanimated"],
+      registryDependencies: ["lib:utils"],
     },
-  },
+  ],
+  
+  hooks: [
+    {
+      name: "use-toast",
+      version: "1.0.0",
+      description: "Toast Hook",
+      files: [
+        "src/hooks/use-toast/use-toast.ts",
+        "src/hooks/use-toast/index.ts",
+      ],
+    },
+  ],
+  
+  lib: [
+    {
+      name: "utils",
+      version: "1.0.0",
+      description: "工具函数",
+      files: ["src/lib/utils.ts"],
+      dependencies: ["clsx", "tailwind-merge"],
+    },
+  ],
 };
 ```
 
-### StyleSheet 风格
+### 3. 构建和发布
 
-创建主题文件统一管理：
-
-```ts
-// lib/theme.ts
-export const colors = {
-  light: {
-    primary: "#3b82f6",
-    background: "#ffffff",
-    foreground: "#111827",
-  },
-  dark: {
-    primary: "#60a5fa",
-    background: "#111827",
-    foreground: "#f9fafb",
-  },
-};
+```bash
+npx aster registry build
+npx aster registry publish
 ```
-
-## 风格对比
-
-| NativeWind | StyleSheet |
-|---|---|
-| 语法 | Tailwind className | StyleSheet.create |
-| 依赖 | nativewind, cva, clsx | 无 |
-| 暗黑模式 | `dark:` 前缀 | 需手动处理 |
-| 适合 | 熟悉 Tailwind 的开发者 | 追求零依赖 |
 
 ## 环境变量
 
 ```bash
-# 自定义 API 地址 (用于私有部署)
-ASTER_API_URL=https://your-domain.com/api/r
+# 自定义 API 地址
+ASTER_API_URL=https://your-domain.com
+
+# 使用 Token 认证 (CI/CD)
+ASTER_TOKEN=your-token
 ```
 
 ## License
 
 MIT
-# aster

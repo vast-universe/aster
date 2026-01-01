@@ -2,19 +2,24 @@
  * Core 模块统一导出
  */
 
+// 依赖解析
 export {
-  fileExists,
-  readFile,
-  writeFile,
-  deleteFile,
-  readJson,
-  writeJson,
-  appendExport,
-  getFileDiff,
-  getInstalledComponentsFromDir,
-  findComponentFile,
-} from "./fs";
+  DependencyResolver,
+  parseResourceRef,
+  getResourceKey,
+  type ResolvedResource,
+} from "./resolver";
 
-export * from "./deps";
-export * from "./installer";
-export * from "./lockfile";
+// 事务管理
+export { InstallTransaction, recoverTransaction } from "./transaction";
+
+// 安全检查
+export {
+  scanCode,
+  scanComponent,
+  printSecurityReport,
+  validateNamespace,
+  validateComponentName,
+  type SecurityIssue,
+  type SecurityReport,
+} from "./security";

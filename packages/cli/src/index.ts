@@ -1,137 +1,193 @@
 #!/usr/bin/env node
+/**
+ * Aster CLI - 跨框架组件库管理工具
+ */
 import { Command } from "commander";
-import { create } from "./commands/create";
-import { init } from "./commands/init";
-import { add } from "./commands/add";
-import { list } from "./commands/list";
-import { diff } from "./commands/diff";
-import { info } from "./commands/info";
-import { remove } from "./commands/remove";
-import { update } from "./commands/update";
-import { search } from "./commands/search";
-import { registryAdd, registryRemove, registryList } from "./commands/registry";
-import { cacheStatus, cacheClean, cacheClear } from "./commands/cache";
-import { presetList, presetInfo, presetRemove } from "./commands/preset";
+import {
+  // create,  // TODO: v2 - 创建项目功能
+  init,
+  add,
+  remove,
+  update,
+  list,
+  search,
+  diff,
+  info,
+  view,
+  login,
+  logout,
+  whoami,
+  tokenList,
+  tokenCreate,
+  tokenRevoke,
+  namespaceCreate,
+  namespaceList,
+  namespaceDelete,
+  registryCreate,
+  registryBuild,
+  registryPublish,
+  recover,
+} from "./commands";
 
 const program = new Command();
 
 program
   .name("aster")
-  .description("跨框架开发脚手架 - 项目创建与组件管理")
+  .description("跨框架组件库 CLI - 安装、管理和发布 UI 组件、Hooks、工具函数")
   .version("0.1.0");
 
-program
-  .command("create")
-  .description("创建新项目")
-  .argument("[project-name]", "项目名称")
-  .option("-y, --yes", "使用默认配置")
-  .option("-f, --framework <name>", "指定框架 (expo/next/vue)")
-  .option("-p, --preset <name>", "使用预设配置")
-  .option("-t, --template <name>", "使用指定模板")
-  .action(create);
+// ============ 项目命令 ============
+
+// TODO: v2 - 创建项目功能
+// program
+//   .command("create")
+//   .description("创建新项目")
+//   .argument("[name]", "项目名称")
+//   .option("-f, --framework <framework>", "框架 (expo/nextjs)")
+//   .option("-s, --starter <starter>", "模板 (minimal/standard/full)")
+//   .option("-y, --yes", "使用默认配置")
+//   .action(create);
 
 program
   .command("init")
   .description("初始化 Aster 配置")
   .action(init);
 
+// ============ 组件命令 ============
+
 program
   .command("add")
-  .description("添加组件或配置片段")
-  .argument(
-    "<items...>",
-    "组件/配置名称 (支持 config:name, github:user/repo/name, @namespace/name)"
-  )
+  .description("添加组件/hooks/lib/config")
+  .argument("<items...>", "资源名称")
   .option("-f, --force", "覆盖已存在的文件")
-  .option("--skip-export", "跳过自动更新 index.ts 导出")
+  .option("--skip-security", "跳过安全检查")
   .action(add);
 
 program
   .command("remove")
-  .description("删除已安装的组件")
-  .argument("[components...]", "组件名称 (可选，不填则交互选择)")
+  .description("删除已安装的资源")
+  .argument("[items...]", "资源名称")
   .option("-y, --yes", "跳过确认")
   .action(remove);
 
 program
   .command("update")
-  .description("更新已安装的组件")
-  .argument("[components...]", "组件名称 (可选)")
-  .option("-a, --all", "更新所有组件")
-  .option("-f, --force", "强制更新，跳过确认")
+  .description("更新已安装的资源")
+  .argument("[items...]", "资源名称")
+  .option("-a, --all", "更新所有")
+  .option("-f, --force", "强制更新")
   .action(update);
 
 program
   .command("list")
-  .description("列出所有可用组件或配置")
-  .option("-c, --configs", "列出配置片段")
-  .option("-i, --installed", "列出已安装的组件和配置")
+  .description("列出可用/已安装的资源")
+  .option("-i, --installed", "列出已安装")
+  .option("-c, --configs", "只列出配置")
+  .option("--hooks", "只列出 hooks")
+  .option("--lib", "只列出工具函数")
   .action(list);
 
 program
   .command("search")
-  .description("搜索组件")
+  .description("搜索资源")
   .argument("[query]", "搜索关键词")
+  .option("-t, --type <type>", "资源类型")
+  .option("-n, --namespace <ns>", "命名空间")
   .action(search);
 
 program
   .command("diff")
-  .description("检查组件更新")
-  .argument("[component]", "组件名称 (可选，不填则检查所有)")
+  .description("检查资源更新")
+  .argument("[item]", "资源名称")
   .action(diff);
 
 program
+  .command("view")
+  .description("预览资源代码")
+  .argument("<item>", "资源名称")
+  .option("-f, --file <file>", "指定文件")
+  .action(view);
+
+program
   .command("info")
-  .description("显示当前配置信息")
+  .description("显示配置信息")
   .action(info);
 
-// Registry 子命令
-const registry = program
-  .command("registry")
-  .description("管理第三方 registry");
+// ============ 认证命令 ============
 
-registry
-  .command("add")
-  .description("添加第三方 registry")
-  .argument("[name]", "Registry 名称 (如 @acme)")
-  .argument("[url]", "Registry URL")
-  .action(registryAdd);
+program.command("login").description("登录 Aster").action(login);
+program.command("logout").description("退出登录").action(logout);
+program.command("whoami").description("查看当前用户").action(whoami);
 
-registry
-  .command("remove")
-  .description("删除第三方 registry")
-  .argument("[name]", "Registry 名称")
-  .action(registryRemove);
+// ============ Token 命令 ============
 
-registry
+const token = program.command("token").description("管理 API Token");
+
+token.command("list").description("列出所有 Token").action(tokenList);
+
+token
+  .command("create")
+  .description("创建新 Token")
+  .option("-n, --name <name>", "Token 名称")
+  .option("-s, --scope <scopes>", "权限范围 (逗号分隔)")
+  .action(tokenCreate);
+
+token
+  .command("revoke")
+  .description("撤销 Token")
+  .argument("<id>", "Token ID")
+  .action(tokenRevoke);
+
+// ============ 命名空间命令 ============
+
+const namespace = program.command("namespace").description("管理命名空间");
+
+namespace
+  .command("create")
+  .description("创建命名空间")
+  .argument("<name>", "名称")
+  .action(namespaceCreate);
+
+namespace
   .command("list")
-  .description("列出所有 registry")
-  .action(registryList);
+  .description("列出我的命名空间")
+  .action(namespaceList);
 
-// Cache 子命令
-const cache = program.command("cache").description("管理离线缓存");
+namespace
+  .command("delete")
+  .description("删除命名空间")
+  .argument("<name>", "名称")
+  .action(namespaceDelete);
 
-cache.command("status").description("显示缓存状态").action(cacheStatus);
+// ============ Registry 命令 ============
 
-cache.command("clean").description("清理过期缓存").action(cacheClean);
+const registry = program.command("registry").description("创建和发布组件库");
 
-cache.command("clear").description("清空所有缓存").action(cacheClear);
+registry
+  .command("create")
+  .description("创建 Registry 项目")
+  .argument("[name]", "项目名称")
+  .option("-n, --namespace <ns>", "命名空间")
+  .action(registryCreate);
 
-// Preset 子命令
-const preset = program.command("preset").description("管理项目预设");
+registry
+  .command("build")
+  .description("构建 Registry")
+  .option("-w, --watch", "监听变化")
+  .action(registryBuild);
 
-preset.command("list").description("列出所有预设").action(presetList);
+registry
+  .command("publish")
+  .description("发布 Registry")
+  .option("-n, --namespace <ns>", "命名空间")
+  .option("--dry-run", "预览发布")
+  .action(registryPublish);
 
-preset
-  .command("info")
-  .description("显示预设详情")
-  .argument("[name]", "预设名称")
-  .action(presetInfo);
+// ============ 其他命令 ============
 
-preset
-  .command("remove")
-  .description("删除自定义预设")
-  .argument("[name]", "预设名称")
-  .action(presetRemove);
+program
+  .command("recover")
+  .description("恢复未完成的安装事务")
+  .action(recover);
 
 program.parse();

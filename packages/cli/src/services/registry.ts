@@ -1,100 +1,146 @@
 /**
- * 官方 Registry 服务
+ * Registry 服务 - 组件仓库 API
  */
+import { get, post } from "../lib/http";
+import type {
+  ResourceRef,
+  ResourceContent,
+  ResourceType,
+  Framework,
+  Style,
+  SearchResult,
+  VersionInfo,
+  SecurityAdvisory,
+} from "../types";
 
-import type { Style } from "../types/config";
-import type { Framework, RegistryItem } from "../types/registry";
-
-const API_URLS = [
-  process.env.ASTER_API_URL || "http://localhost:3000/api/r",
-];
-
-async function fetchWithFallback(path: string, retries = 2): Promise<Response> {
-  let lastError: Error | null = null;
-
-  for (const baseUrl of API_URLS) {
-    for (let i = 0; i < retries; i++) {
-      try {
-        const response = await fetch(`${baseUrl}${path}`, {
-          signal: AbortSignal.timeout(10000),
-        });
-        if (response.ok || response.status === 404 || response.status === 400) {
-          return response;
-        }
-      } catch (error) {
-        lastError = error as Error;
-        if (i < retries - 1) {
-          await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
-        }
-      }
-    }
-  }
-
-  throw lastError || new Error("网络请求失败");
-}
-
-export async function fetchComponent(
-  name: string,
+/**
+ * 获取资源
+ */
+export async function fetchResource(
+  ref: ResourceRef,
   framework: Framework = "expo",
-  style: Style
-): Promise<RegistryItem> {
-  const params = new URLSearchParams({ framework, type: "ui", style });
-  const response = await fetchWithFallback(`/${name}?${params.toString()}`);
+  style?: Style
+): Promise<ResourceContent> {
+  const typePrefix = ref.type === "ui" ? "" : `${ref.type}:`;
+  const version = ref.version || "latest";
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error(`组件 "${name}" 不存在`);
-    }
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || `获取组件失败: ${response.statusText}`);
+  const params = new URLSearchParams({ framework });
+  if (style && ref.type === "ui") {
+    params.set("style", style);
   }
 
-  return response.json();
+  return get<ResourceContent>(
+    `/api/registry/${ref.namespace}/${typePrefix}${ref.name}/${version}?${params}`
+  );
 }
 
-export async function fetchConfig(
-  name: string,
-  framework: Framework = "expo"
-): Promise<RegistryItem> {
-  const params = new URLSearchParams({ framework, type: "config" });
-  const response = await fetchWithFallback(`/${name}?${params.toString()}`);
+/**
+ * 搜索资源
+ */
+export async function searchResources(
+  query: string,
+  options: {
+    type?: ResourceType;
+    namespace?: string;
+    framework?: Framework;
+    limit?: number;
+    offset?: number;
+  } = {}
+): Promise<{ items: SearchResult[]; total: number }> {
+  const params = new URLSearchParams();
+  params.set("q", query);
+  if (options.type) params.set("type", options.type);
+  if (options.namespace) params.set("namespace", options.namespace);
+  if (options.framework) params.set("framework", options.framework);
+  if (options.limit) params.set("limit", String(options.limit));
+  if (options.offset) params.set("offset", String(options.offset));
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error(`配置 "${name}" 不存在`);
-    }
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || `获取配置失败: ${response.statusText}`);
-  }
-
-  return response.json();
+  return get<{ items: SearchResult[]; total: number }>(
+    `/api/registry/search?${params}`
+  );
 }
 
-export async function fetchRegistry(
-  framework: Framework = "expo",
-  style: Style
-): Promise<RegistryItem[]> {
-  const params = new URLSearchParams({ framework, type: "ui", style });
-  const response = await fetchWithFallback(`?${params.toString()}`);
+/**
+ * 获取所有资源列表
+ */
+export async function fetchAllResources(
+  options: {
+    type?: ResourceType;
+    framework?: Framework;
+    style?: Style;
+    limit?: number;
+    offset?: number;
+  } = {}
+): Promise<{ items: SearchResult[]; total: number }> {
+  const params = new URLSearchParams();
+  if (options.type) params.set("type", options.type);
+  if (options.framework) params.set("framework", options.framework);
+  if (options.style) params.set("style", options.style);
+  if (options.limit) params.set("limit", String(options.limit));
+  if (options.offset) params.set("offset", String(options.offset));
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || `获取组件列表失败`);
-  }
-
-  return response.json();
+  return get<{ items: SearchResult[]; total: number }>(`/api/registry?${params}`);
 }
 
-export async function fetchConfigRegistry(
-  framework: Framework = "expo"
-): Promise<RegistryItem[]> {
-  const params = new URLSearchParams({ framework, type: "config" });
-  const response = await fetchWithFallback(`?${params.toString()}`);
+/**
+ * 获取命名空间下的资源
+ */
+export async function fetchNamespaceResources(
+  namespace: string,
+  options: {
+    type?: ResourceType;
+    framework?: Framework;
+  } = {}
+): Promise<{
+  namespace: string;
+  resources: Array<{
+    name: string;
+    type: ResourceType;
+    description?: string;
+    latestVersion: string;
+  }>;
+}> {
+  const params = new URLSearchParams();
+  if (options.type) params.set("type", options.type);
+  if (options.framework) params.set("framework", options.framework);
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || `获取配置列表失败`);
-  }
+  return get(`/api/registry/${namespace}?${params}`);
+}
 
-  return response.json();
+/**
+ * 获取资源版本列表
+ */
+export async function fetchResourceVersions(
+  ref: Omit<ResourceRef, "version">
+): Promise<{ versions: VersionInfo[] }> {
+  const typePrefix = ref.type === "ui" ? "" : `${ref.type}:`;
+  return get(`/api/registry/${ref.namespace}/${typePrefix}${ref.name}/versions`);
+}
+
+/**
+ * 检查安全公告
+ */
+export async function checkSecurityAdvisories(
+  refs: ResourceRef[]
+): Promise<{ advisories: SecurityAdvisory[] }> {
+  return post(
+    "/api/security/check",
+    { resources: refs },
+    { auth: true }
+  );
+}
+
+/**
+ * 发布资源
+ */
+export async function publishResources(data: {
+  namespace: string;
+  index: any;
+  resources: any[];
+}): Promise<{
+  success: boolean;
+  published: Array<{ name: string; type: ResourceType; version: string }>;
+  errors?: Array<{ name: string; error: string }>;
+}> {
+  return post("/api/registry/publish", data, { auth: true });
 }

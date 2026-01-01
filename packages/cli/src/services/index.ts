@@ -1,8 +1,24 @@
 /**
- * 服务层统一导出
+ * Services 模块统一导出
  */
 
-export * from "./registry";
-export * from "./remote-config";
-export * from "./git-registry";
-export * from "./http-registry";
+// Registry 服务
+export {
+  fetchResource,
+  searchResources,
+  fetchAllResources,
+  fetchNamespaceResources,
+  fetchResourceVersions,
+  checkSecurityAdvisories,
+  publishResources,
+} from "./registry";
+
+// 认证服务
+export {
+  fetchCurrentUser,
+  verifyToken,
+  fetchNamespaces,
+  createNamespace,
+  deleteNamespace,
+  checkNamespaceAvailable,
+} from "./auth";
